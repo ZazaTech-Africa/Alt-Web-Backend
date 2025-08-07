@@ -4,14 +4,12 @@ const crypto = require("crypto");
 const { validationResult } = require("express-validator");
 const sendEmail = require("../utils/sendEmail");
 
-// Generate JWT Token
 const generateToken = (id) => {
   return jwt.sign({ id }, process.env.JWT_SECRET, {
     expiresIn: process.env.JWT_EXPIRE || "7d",
   });
 };
 
-// Send token response
 const sendTokenResponse = (user, statusCode, res, message = "Success") => {
   const token = generateToken(user._id);
 
@@ -50,9 +48,6 @@ const sendTokenResponse = (user, statusCode, res, message = "Success") => {
     });
 };
 
-// @desc    Register user
-// @route   POST /api/auth/register
-// @access  Public
 exports.register = async (req, res) => {
   try {
     const errors = validationResult(req);
@@ -66,7 +61,6 @@ exports.register = async (req, res) => {
 
     const { fullName, email, password } = req.body;
 
-    // Check if user already exists
     const existingUser = await User.findOne({ email });
     if (existingUser) {
       return res.status(400).json({
@@ -75,18 +69,20 @@ exports.register = async (req, res) => {
       });
     }
 
-    // Create user
     const user = await User.create({
       fullName,
       email,
       password,
+      isEmailVerified: process.env.SKIP_EMAIL_VERIFICATION === 'true',
     });
 
-    // Generate email verification code
+    if (process.env.SKIP_EMAIL_VERIFICATION === 'true') {
+      return sendTokenResponse(user, 201, res, "Registration successful! (Development mode - email verification skipped)");
+    }
+
     const verificationCode = user.generateEmailVerificationCode();
     await user.save({ validateBeforeSave: false });
 
-    // Send verification email
     try {
       const message = `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
@@ -143,130 +139,10 @@ exports.register = async (req, res) => {
   }
 };
 
-// @desc    Verify email with code
-// @route   POST /api/auth/verify-email
-// @access  Public
-exports.verifyEmail = async (req, res) => {
-  try {
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-      return res.status(400).json({
-        success: false,
-        message: "Validation failed",
-        errors: errors.array(),
-      });
-    }
-
-    const { email, code } = req.body;
-
-    // Hash the provided code
-    const hashedCode = crypto.createHash("sha256").update(code).digest("hex");
-
-    const user = await User.findOne({
-      email,
-      emailVerificationCode: hashedCode,
-      emailVerificationExpire: { $gt: Date.now() },
-    });
-
-    if (!user) {
-      return res.status(400).json({
-        success: false,
-        message: "Invalid or expired verification code",
-      });
-    }
-
-    // Update user
-    user.isEmailVerified = true;
-    user.emailVerificationCode = undefined;
-    user.emailVerificationExpire = undefined;
-
-    await user.save({ validateBeforeSave: false });
-
-    sendTokenResponse(user, 200, res, "Email verified successfully! Welcome to SHARPERLY!");
-  } catch (error) {
-    console.error("Email verification error:", error);
-    res.status(500).json({
-      success: false,
-      message: "Server error during email verification",
-    });
-  }
-};
-
-// @desc    Resend verification code
-// @route   POST /api/auth/resend-verification
-// @access  Public
-exports.resendVerification = async (req, res) => {
-  try {
-    const { email } = req.body;
-
-    const user = await User.findOne({ email });
-
-    if (!user) {
-      return res.status(404).json({
-        success: false,
-        message: "No user found with this email address",
-      });
-    }
-
-    if (user.isEmailVerified) {
-      return res.status(400).json({
-        success: false,
-        message: "Email is already verified",
-      });
-    }
-
-    // Generate new verification code
-    const verificationCode = user.generateEmailVerificationCode();
-    await user.save({ validateBeforeSave: false });
-
-    // Send verification email
-    const message = `
-      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-        <h1 style="color: #dc2626; text-align: center;">Email Verification</h1>
-        <p>Your new email verification code is:</p>
-        <div style="text-align: center; margin: 20px 0;">
-          <span style="font-size: 32px; font-weight: bold; color: #dc2626; letter-spacing: 5px; padding: 15px; border: 2px solid #dc2626; border-radius: 8px;">${verificationCode}</span>
-        </div>
-        <p>This code will expire in ${process.env.OTP_EXPIRE_MINUTES || 10} minutes.</p>
-      </div>
-    `;
-
-    await sendEmail({
-      email: user.email,
-      subject: "SHARPERLY - New Verification Code",
-      html: message,
-    });
-
-    res.status(200).json({
-      success: true,
-      message: "New verification code sent successfully",
-    });
-  } catch (error) {
-    console.error("Resend verification error:", error);
-    res.status(500).json({
-      success: false,
-      message: "Server error while resending verification code",
-    });
-  }
-};
-
-// @desc    Login user
-// @route   POST /api/auth/login
-// @access  Public
 exports.login = async (req, res) => {
   try {
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-      return res.status(400).json({
-        success: false,
-        message: "Validation failed",
-        errors: errors.array(),
-      });
-    }
-
     const { email, password } = req.body;
 
-    // Check for user and include password
     const user = await User.findOne({ email }).select("+password");
 
     if (!user) {
@@ -276,7 +152,6 @@ exports.login = async (req, res) => {
       });
     }
 
-    // Check if password matches
     const isMatch = await user.comparePassword(password);
 
     if (!isMatch) {
@@ -286,7 +161,6 @@ exports.login = async (req, res) => {
       });
     }
 
-    // Check if account is active
     if (!user.isActive) {
       return res.status(401).json({
         success: false,
@@ -294,8 +168,7 @@ exports.login = async (req, res) => {
       });
     }
 
-    // Check if email is verified
-    if (!user.isEmailVerified) {
+    if (!user.isEmailVerified && process.env.SKIP_EMAIL_VERIFICATION !== 'true') {
       return res.status(401).json({
         success: false,
         message: "Please verify your email address before logging in.",
@@ -303,7 +176,6 @@ exports.login = async (req, res) => {
       });
     }
 
-    // Update last login
     await user.updateLastLogin();
 
     sendTokenResponse(user, 200, res, "Login successful! Welcome back to SHARPERLY!");
@@ -316,24 +188,108 @@ exports.login = async (req, res) => {
   }
 };
 
-// @desc    Logout user
-// @route   POST /api/auth/logout
-// @access  Private
-exports.logout = async (req, res) => {
-  res.cookie("token", "none", {
-    expires: new Date(Date.now() + 10 * 1000),
-    httpOnly: true,
-  });
+exports.verifyEmail = async (req, res) => {
+  try {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({
+        success: false,
+        message: "Validation failed",
+        errors: errors.array(),
+      });
+    }
 
-  res.status(200).json({
-    success: true,
-    message: "User logged out successfully",
-  });
+    const { email, verificationCode } = req.body;
+
+    const hashedCode = crypto
+      .createHash("sha256")
+      .update(verificationCode)
+      .digest("hex");
+
+    const user = await User.findOne({
+      email,
+      emailVerificationCode: hashedCode,
+      emailVerificationExpire: { $gt: Date.now() },
+    });
+
+    if (!user) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid or expired verification code.",
+      });
+    }
+
+    user.isEmailVerified = true;
+    user.emailVerificationCode = undefined;
+    user.emailVerificationExpire = undefined;
+    await user.save({ validateBeforeSave: false });
+
+    sendTokenResponse(user, 200, res, "Email verified successfully! Welcome to SHARPERLY!");
+  } catch (error) {
+    console.error("Verify email error:", error);
+    res.status(500).json({
+      success: false,
+      message: "Server error during email verification",
+    });
+  }
 };
 
-// @desc    Forgot password - send reset code
-// @route   POST /api/auth/forgot-password
-// @access  Public
+exports.resendVerification = async (req, res) => {
+  try {
+    const { email } = req.body;
+
+    const user = await User.findOne({ email });
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: "User not found with this email.",
+      });
+    }
+
+    if (user.isEmailVerified) {
+      return res.status(400).json({
+        success: false,
+        message: "Email is already verified.",
+      });
+    }
+
+    const verificationCode = user.generateEmailVerificationCode();
+    await user.save({ validateBeforeSave: false });
+
+    const message = `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+        <h1 style="color: #dc2626; text-align: center;">SHARPERLY - Resend Verification Code</h1>
+        <p>You requested to resend your email verification code. Here is your new code:</p>
+        <div style="text-align: center; margin: 20px 0;">
+          <span style="font-size: 32px; font-weight: bold; color: #dc2626; letter-spacing: 5px; padding: 15px; border: 2px solid #dc2626; border-radius: 8px;">${verificationCode}</span>
+        </div>
+        <p>This code will expire in ${process.env.OTP_EXPIRE_MINUTES || 10} minutes.</p>
+        <p>If you didn't request this, please ignore this email.</p>
+        <hr style="margin: 30px 0;">
+        <p style="color: #666; font-size: 12px;">SHARPERLY - The Dispatch Giant of Africa</p>
+      </div>
+    `;
+
+    await sendEmail({
+      email: user.email,
+      subject: "SHARPERLY - Your New Email Verification Code",
+      html: message,
+    });
+
+    res.status(200).json({
+      success: true,
+      message: "New verification code sent to your email.",
+    });
+  } catch (error) {
+    console.error("Resend verification error:", error);
+    res.status(500).json({
+      success: false,
+      message: "Server error while resending verification code.",
+    });
+  }
+};
+
 exports.forgotPassword = async (req, res) => {
   try {
     const errors = validationResult(req);
@@ -345,30 +301,29 @@ exports.forgotPassword = async (req, res) => {
       });
     }
 
-    const user = await User.findOne({ email: req.body.email });
+    const { email } = req.body;
+    const user = await User.findOne({ email });
 
     if (!user) {
       return res.status(404).json({
         success: false,
-        message: "No user found with this email address",
+        message: "User not found with this email.",
       });
     }
 
-    // Generate reset code
     const resetCode = user.generatePasswordResetCode();
     await user.save({ validateBeforeSave: false });
 
-    // Send reset email
     const message = `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-        <h1 style="color: #dc2626; text-align: center;">Password Reset Request</h1>
-        <p>You have requested a password reset for your SHARPERLY account.</p>
+        <h1 style="color: #dc2626; text-align: center;">SHARPERLY - Password Reset</h1>
+        <p>You are receiving this email because you (or someone else) has requested the reset of a password.</p>
         <p>Your password reset code is:</p>
         <div style="text-align: center; margin: 20px 0;">
           <span style="font-size: 32px; font-weight: bold; color: #dc2626; letter-spacing: 5px; padding: 15px; border: 2px solid #dc2626; border-radius: 8px;">${resetCode}</span>
         </div>
         <p>This code will expire in ${process.env.OTP_EXPIRE_MINUTES || 10} minutes.</p>
-        <p>If you didn't request this, please ignore this email.</p>
+        <p>If you did not request this, please ignore this email.</p>
         <hr style="margin: 30px 0;">
         <p style="color: #666; font-size: 12px;">SHARPERLY - The Dispatch Giant of Africa</p>
       </div>
@@ -377,38 +332,33 @@ exports.forgotPassword = async (req, res) => {
     try {
       await sendEmail({
         email: user.email,
-        subject: "SHARPERLY - Password Reset Code",
+        subject: "SHARPERLY - Password Reset Request",
         html: message,
       });
 
       res.status(200).json({
         success: true,
-        message: "Password reset code sent to your email successfully",
+        message: "Password reset code sent to your email.",
       });
     } catch (error) {
-      console.error("Email sending failed:", error);
+      console.error("Password reset email failed:", error);
       user.passwordResetCode = undefined;
       user.passwordResetExpire = undefined;
-
       await user.save({ validateBeforeSave: false });
-
-      return res.status(500).json({
+      res.status(500).json({
         success: false,
-        message: "Email could not be sent",
+        message: "Email could not be sent. Please try again later.",
       });
     }
   } catch (error) {
     console.error("Forgot password error:", error);
     res.status(500).json({
       success: false,
-      message: "Server error during password reset request",
+      message: "Server error during forgot password request.",
     });
   }
 };
 
-// @desc    Verify reset code
-// @route   POST /api/auth/verify-reset-code
-// @access  Public
 exports.verifyResetCode = async (req, res) => {
   try {
     const errors = validationResult(req);
@@ -422,8 +372,10 @@ exports.verifyResetCode = async (req, res) => {
 
     const { email, code } = req.body;
 
-    // Hash the provided code
-    const hashedCode = crypto.createHash("sha256").update(code).digest("hex");
+    const hashedCode = crypto
+      .createHash("sha256")
+      .update(code)
+      .digest("hex");
 
     const user = await User.findOne({
       email,
@@ -434,26 +386,23 @@ exports.verifyResetCode = async (req, res) => {
     if (!user) {
       return res.status(400).json({
         success: false,
-        message: "Invalid or expired reset code",
+        message: "Invalid or expired reset code.",
       });
     }
 
     res.status(200).json({
       success: true,
-      message: "Reset code verified successfully. You can now set a new password.",
+      message: "Reset code verified successfully. You can now reset your password.",
     });
   } catch (error) {
     console.error("Verify reset code error:", error);
     res.status(500).json({
       success: false,
-      message: "Server error during code verification",
+      message: "Server error during reset code verification.",
     });
   }
 };
 
-// @desc    Reset password with code
-// @route   POST /api/auth/reset-password
-// @access  Public
 exports.resetPassword = async (req, res) => {
   try {
     const errors = validationResult(req);
@@ -465,10 +414,12 @@ exports.resetPassword = async (req, res) => {
       });
     }
 
-    const { email, code, password } = req.body;
+    const { email, code, password, confirmPassword } = req.body;
 
-    // Hash the provided code
-    const hashedCode = crypto.createHash("sha256").update(code).digest("hex");
+    const hashedCode = crypto
+      .createHash("sha256")
+      .update(code)
+      .digest("hex");
 
     const user = await User.findOne({
       email,
@@ -479,47 +430,82 @@ exports.resetPassword = async (req, res) => {
     if (!user) {
       return res.status(400).json({
         success: false,
-        message: "Invalid or expired reset code",
+        message: "Invalid or expired reset code.",
       });
     }
 
-    // Set new password
+    if (password !== confirmPassword) {
+      return res.status(400).json({
+        success: false,
+        message: "New passwords do not match.",
+      });
+    }
+
     user.password = password;
     user.passwordResetCode = undefined;
     user.passwordResetExpire = undefined;
-
     await user.save();
 
-    sendTokenResponse(user, 200, res, "Password reset successful! You are now logged in.");
-  } catch (error) {
+    sendTokenResponse(user, 200, res, "Password reset successfully! You are now logged in.");
+  }
+  catch (error) {
     console.error("Reset password error:", error);
     res.status(500).json({
       success: false,
-      message: "Server error during password reset",
+      message: "Server error during password reset.",
     });
   }
 };
 
-// @desc    Google OAuth callback
-// @route   GET /api/auth/google/callback
-// @access  Public
-exports.googleCallback = async (req, res) => {
+exports.googleCallback = (req, res) => {
+  sendTokenResponse(req.user, 200, res, "Google login successful!");
+};
+
+exports.logout = (req, res) => {
+  res.cookie("token", "none", {
+    expires: new Date(Date.now() + 10 * 1000),
+    httpOnly: true,
+  });
+
+  res.status(200).json({
+    success: true,
+    message: "Logged out successfully",
+  });
+};
+
+exports.updatePassword = async (req, res) => {
   try {
-    await req.user.updateLastLogin();
-    
-    const token = generateToken(req.user._id);
-    
-    // Redirect to frontend with token
-    res.redirect(`${process.env.FRONTEND_URL}/auth/success?token=${token}`);
+    const { currentPassword, newPassword, confirmNewPassword } = req.body;
+
+    const user = await User.findById(req.user.id).select("+password");
+
+    if (!(await user.comparePassword(currentPassword))) {
+      return res.status(401).json({
+        success: false,
+        message: "Current password is incorrect.",
+      });
+    }
+
+    if (newPassword !== confirmNewPassword) {
+      return res.status(400).json({
+        success: false,
+        message: "New passwords do not match.",
+      });
+    }
+
+    user.password = newPassword;
+    await user.save();
+
+    sendTokenResponse(user, 200, res, "Password updated successfully!");
   } catch (error) {
-    console.error("Google callback error:", error);
-    res.redirect(`${process.env.FRONTEND_URL}/auth/error`);
+    console.error("Update password error:", error);
+    res.status(500).json({
+      success: false,
+      message: "Server error while updating password.",
+    });
   }
 };
 
-// @desc    Get current logged in user
-// @route   GET /api/auth/me
-// @access  Private
 exports.getMe = async (req, res) => {
   try {
     const user = await User.findById(req.user.id);
@@ -546,34 +532,6 @@ exports.getMe = async (req, res) => {
     res.status(500).json({
       success: false,
       message: "Server error while fetching user data",
-    });
-  }
-};
-
-// @desc    Update password
-// @route   PUT /api/auth/update-password
-// @access  Private
-exports.updatePassword = async (req, res) => {
-  try {
-    const user = await User.findById(req.user.id).select("+password");
-
-    // Check current password
-    if (!(await user.comparePassword(req.body.currentPassword))) {
-      return res.status(401).json({
-        success: false,
-        message: "Current password is incorrect",
-      });
-    }
-
-    user.password = req.body.newPassword;
-    await user.save();
-
-    sendTokenResponse(user, 200, res, "Password updated successfully");
-  } catch (error) {
-    console.error("Update password error:", error);
-    res.status(500).json({
-      success: false,
-      message: "Server error while updating password",
     });
   }
 };

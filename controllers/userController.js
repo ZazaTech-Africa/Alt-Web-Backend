@@ -3,9 +3,6 @@ const Business = require("../models/Business");
 const { validationResult } = require("express-validator");
 const cloudinary = require("../config/cloudinary");
 
-// @desc    Get user profile
-// @route   GET /api/users/profile
-// @access  Private
 exports.getProfile = async (req, res) => {
   try {
     const user = await User.findById(req.user.id);
@@ -39,9 +36,6 @@ exports.getProfile = async (req, res) => {
   }
 };
 
-// @desc    Update user profile
-// @route   PUT /api/users/profile
-// @access  Private
 exports.updateProfile = async (req, res) => {
   try {
     const errors = validationResult(req);
@@ -59,12 +53,10 @@ exports.updateProfile = async (req, res) => {
       about: req.body.about,
     };
 
-    // Remove undefined fields
     Object.keys(fieldsToUpdate).forEach(
       (key) => fieldsToUpdate[key] === undefined && delete fieldsToUpdate[key]
     );
 
-    // Check if email is being changed and if it already exists
     if (fieldsToUpdate.email) {
       const existingUser = await User.findOne({ 
         email: fieldsToUpdate.email,
@@ -78,7 +70,6 @@ exports.updateProfile = async (req, res) => {
         });
       }
 
-      // If email is changed, mark as unverified
       fieldsToUpdate.isEmailVerified = false;
     }
 
@@ -114,9 +105,6 @@ exports.updateProfile = async (req, res) => {
   }
 };
 
-// @desc    Update profile image
-// @route   PUT /api/users/profile-image
-// @access  Private
 exports.updateProfileImage = async (req, res) => {
   try {
     if (!req.file) {
@@ -126,7 +114,6 @@ exports.updateProfileImage = async (req, res) => {
       });
     }
 
-    // Upload to Cloudinary
     const result = await cloudinary.uploader.upload(req.file.path, {
       folder: "sharperly/profile-images",
       width: 300,
@@ -136,7 +123,6 @@ exports.updateProfileImage = async (req, res) => {
       fetch_format: "auto",
     });
 
-    // Update user profile image
     const user = await User.findByIdAndUpdate(
       req.user.id,
       { profileImage: result.secure_url },
@@ -157,9 +143,6 @@ exports.updateProfileImage = async (req, res) => {
   }
 };
 
-// @desc    Skip corporate info
-// @route   PUT /api/users/skip-corporate-info
-// @access  Private
 exports.skipCorporateInfo = async (req, res) => {
   try {
     await User.findByIdAndUpdate(req.user.id, {
@@ -179,16 +162,11 @@ exports.skipCorporateInfo = async (req, res) => {
   }
 };
 
-// @desc    Delete user account
-// @route   DELETE /api/users/account
-// @access  Private
 exports.deleteAccount = async (req, res) => {
   try {
-    // Delete related business and vehicle data
     await Business.findOneAndDelete({ user: req.user.id });
     await Vehicle.findOneAndDelete({ user: req.user.id });
     
-    // Delete user
     await User.findByIdAndDelete(req.user.id);
 
     res.status(200).json({
@@ -204,15 +182,11 @@ exports.deleteAccount = async (req, res) => {
   }
 };
 
-// @desc    Get all users (Admin only)
-// @route   GET /api/users
-// @access  Private/Admin
 exports.getAllUsers = async (req, res) => {
   try {
     const { page = 1, limit = 20, search, role, status } = req.query;
     const skip = (page - 1) * limit;
 
-    // Build query
     let query = {};
     
     if (search) {
@@ -260,9 +234,6 @@ exports.getAllUsers = async (req, res) => {
   }
 };
 
-// @desc    Get user by ID (Admin only)
-// @route   GET /api/users/:id
-// @access  Private/Admin
 exports.getUserById = async (req, res) => {
   try {
     const user = await User.findById(req.params.id).select("-password");
@@ -290,9 +261,6 @@ exports.getUserById = async (req, res) => {
   }
 };
 
-// @desc    Update user status (Admin only)
-// @route   PUT /api/users/:id/status
-// @access  Private/Admin
 exports.updateUserStatus = async (req, res) => {
   try {
     const { isActive } = req.body;

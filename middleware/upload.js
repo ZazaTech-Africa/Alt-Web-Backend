@@ -1,7 +1,6 @@
 const multer = require('multer');
 const path = require('path');
 
-// Configure multer for file uploads
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
     cb(null, '/tmp/');
@@ -11,11 +10,8 @@ const storage = multer.diskStorage({
   }
 });
 
-// File filter
 const fileFilter = (req, file, cb) => {
-  // Check file type
   if (file.fieldname === 'proofOfAddress') {
-    // Allow documents and images for proof of address
     if (file.mimetype.startsWith('image/') || 
         file.mimetype === 'application/pdf' ||
         file.mimetype.includes('document')) {
@@ -24,7 +20,6 @@ const fileFilter = (req, file, cb) => {
       cb(new Error('Please upload a valid document (PDF, DOC, DOCX) or image file'), false);
     }
   } else if (file.fieldname === 'profileImage') {
-    // Only allow images for profile pictures
     if (file.mimetype.startsWith('image/')) {
       cb(null, true);
     } else {

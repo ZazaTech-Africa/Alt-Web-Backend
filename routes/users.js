@@ -6,10 +6,8 @@ const upload = require("../middleware/upload");
 
 const router = express.Router();
 
-// All routes are protected
 router.use(auth);
 
-// Profile validation
 const updateProfileValidation = [
   body("fullName")
     .optional()
@@ -27,16 +25,13 @@ const updateProfileValidation = [
     .withMessage("About section cannot exceed 500 characters"),
 ];
 
-// User routes
 router.get("/profile", userController.getProfile);
 router.put("/profile", updateProfileValidation, userController.updateProfile);
 router.put("/profile-image", upload.single("profileImage"), userController.updateProfileImage);
 router.delete("/account", userController.deleteAccount);
 
-// Onboarding routes
 router.put("/skip-corporate-info", userController.skipCorporateInfo);
 
-// Admin only routes
 router.get("/", authorize("admin"), userController.getAllUsers);
 router.get("/:id", authorize("admin"), userController.getUserById);
 router.put("/:id/status", authorize("admin"), userController.updateUserStatus);

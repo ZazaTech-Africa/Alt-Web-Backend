@@ -12,7 +12,6 @@ const orderSchema = new mongoose.Schema({
     required: true,
   },
   
-  // Order details
   orderNumber: {
     type: String,
     unique: true,
@@ -34,7 +33,6 @@ const orderSchema = new mongoose.Schema({
     min: [1, "Quantity must be at least 1"],
   },
   
-  // Pickup and delivery
   pickupLocation: {
     address: {
       type: String,
@@ -60,7 +58,6 @@ const orderSchema = new mongoose.Schema({
     contactPhone: String,
   },
   
-  // Dates
   orderDate: {
     type: Date,
     default: Date.now,
@@ -72,7 +69,6 @@ const orderSchema = new mongoose.Schema({
   actualDispatchDate: Date,
   actualDeliveryDate: Date,
   
-  // Assignment
   assignedDriver: {
     type: mongoose.Schema.Types.ObjectId,
     ref: "Driver",
@@ -83,14 +79,12 @@ const orderSchema = new mongoose.Schema({
     required: [true, "Vehicle type is required"],
   },
   
-  // Status
   status: {
     type: String,
     enum: ["pending", "assigned", "in_transit", "delivered", "cancelled"],
     default: "pending",
   },
   
-  // Pricing
   estimatedCost: {
     type: Number,
     required: [true, "Estimated cost is required"],
@@ -98,13 +92,11 @@ const orderSchema = new mongoose.Schema({
   },
   actualCost: Number,
   
-  // Tracking
   trackingNumber: {
     type: String,
     unique: true,
   },
   
-  // Notes and updates
   notes: String,
   statusHistory: [{
     status: String,
@@ -119,7 +111,6 @@ const orderSchema = new mongoose.Schema({
   timestamps: true,
 });
 
-// Generate order number before saving
 orderSchema.pre("save", async function(next) {
   if (!this.orderNumber) {
     const count = await mongoose.model("Order").countDocuments();
@@ -133,7 +124,6 @@ orderSchema.pre("save", async function(next) {
   next();
 });
 
-// Update status history when status changes
 orderSchema.pre("save", function(next) {
   if (this.isModified("status")) {
     this.statusHistory.push({
@@ -144,7 +134,6 @@ orderSchema.pre("save", function(next) {
   next();
 });
 
-// Indexes
 orderSchema.index({ user: 1 });
 orderSchema.index({ business: 1 });
 orderSchema.index({ orderNumber: 1 });

@@ -12,7 +12,6 @@ const vehicleSchema = new mongoose.Schema({
     required: true,
   },
   
-  // Fleet information
   numberOfDrivers: {
     type: Number,
     required: [true, "Number of drivers is required"],
@@ -34,13 +33,11 @@ const vehicleSchema = new mongoose.Schema({
     min: [0, "Number of vans cannot be negative"],
   },
   
-  // Calculated fields
   totalVehicles: {
     type: Number,
     default: 0,
   },
   
-  // Status
   isActive: {
     type: Boolean,
     default: true,
@@ -50,13 +47,11 @@ const vehicleSchema = new mongoose.Schema({
   timestamps: true,
 });
 
-// Calculate total vehicles before saving
 vehicleSchema.pre("save", function(next) {
   this.totalVehicles = this.numberOfCars + this.numberOfBikes + this.numberOfVans;
   next();
 });
 
-// Indexes
 vehicleSchema.index({ user: 1 });
 vehicleSchema.index({ business: 1 });
 

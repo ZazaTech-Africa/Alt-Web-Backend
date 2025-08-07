@@ -47,7 +47,7 @@ const businessSchema = new mongoose.Schema({
     trim: true,
   },
   proofOfAddress: {
-    type: String, // Cloudinary URL
+    type: String,
     required: [true, "Proof of address is required"],
   },
   businessHotline: {
@@ -65,7 +65,6 @@ const businessSchema = new mongoose.Schema({
     default: false,
   },
   
-  // Business verification status
   isVerified: {
     type: Boolean,
     default: false,
@@ -77,7 +76,6 @@ const businessSchema = new mongoose.Schema({
   },
   verificationNotes: String,
   
-  // Business metrics
   totalOrders: {
     type: Number,
     default: 0,
@@ -97,7 +95,6 @@ const businessSchema = new mongoose.Schema({
   timestamps: true,
 });
 
-// Indexes
 businessSchema.index({ user: 1 });
 businessSchema.index({ cacRegistrationNumber: 1 });
 businessSchema.index({ businessEmail: 1 });

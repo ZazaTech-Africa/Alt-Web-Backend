@@ -39,7 +39,6 @@ const userSchema = new mongoose.Schema({
     maxlength: [500, "About section cannot exceed 500 characters"],
   },
   
-  // Account status
   isEmailVerified: {
     type: Boolean,
     default: false,
@@ -49,7 +48,6 @@ const userSchema = new mongoose.Schema({
     default: true,
   },
   
-  // Onboarding status
   hasCompletedOnboarding: {
     type: Boolean,
     default: false,
@@ -67,15 +65,12 @@ const userSchema = new mongoose.Schema({
     default: false,
   },
   
-  // Email verification
   emailVerificationCode: String,
   emailVerificationExpire: Date,
   
-  // Password reset
   passwordResetCode: String,
   passwordResetExpire: Date,
   
-  // Google OAuth
   googleId: String,
   
   lastLogin: {
@@ -86,13 +81,11 @@ const userSchema = new mongoose.Schema({
   timestamps: true,
 });
 
-// Indexes
 userSchema.index({ email: 1 });
 userSchema.index({ googleId: 1 });
 userSchema.index({ emailVerificationCode: 1 });
 userSchema.index({ passwordResetCode: 1 });
 
-// Hash password before saving
 userSchema.pre("save", async function (next) {
   if (!this.isModified("password") || !this.password) return next();
 
@@ -105,13 +98,11 @@ userSchema.pre("save", async function (next) {
   }
 });
 
-// Compare password method
 userSchema.methods.comparePassword = async function (candidatePassword) {
   if (!this.password) return false;
   return await bcrypt.compare(candidatePassword, this.password);
 };
 
-// Generate 6-digit verification code
 userSchema.methods.generateEmailVerificationCode = function () {
   const code = Math.floor(100000 + Math.random() * 900000).toString();
   
@@ -125,7 +116,6 @@ userSchema.methods.generateEmailVerificationCode = function () {
   return code;
 };
 
-// Generate 6-digit password reset code
 userSchema.methods.generatePasswordResetCode = function () {
   const code = Math.floor(100000 + Math.random() * 900000).toString();
   
@@ -139,7 +129,6 @@ userSchema.methods.generatePasswordResetCode = function () {
   return code;
 };
 
-// Update last login
 userSchema.methods.updateLastLogin = function () {
   this.lastLogin = new Date();
   return this.save({ validateBeforeSave: false });

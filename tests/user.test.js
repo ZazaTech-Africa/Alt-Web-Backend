@@ -3,7 +3,6 @@ const mongoose = require('mongoose');
 const app = require('../server');
 const User = require('../models/User');
 
-// Test database connection
 beforeAll(async () => {
   const testDbUri = process.env.MONGODB_TEST_URI || 'mongodb://localhost:27017/sharperly_test';
   await mongoose.connect(testDbUri, {
@@ -12,12 +11,10 @@ beforeAll(async () => {
   });
 });
 
-// Clean up database before each test
 beforeEach(async () => {
   await User.deleteMany({});
 });
 
-// Close database connection after all tests
 afterAll(async () => {
   await mongoose.connection.close();
 });
@@ -29,7 +26,6 @@ describe('User Endpoints', () => {
   let adminToken;
 
   beforeEach(async () => {
-    // Create regular user
     user = await User.create({
       fullName: 'John Doe',
       email: 'john@example.com',
@@ -37,7 +33,6 @@ describe('User Endpoints', () => {
       isEmailVerified: true
     });
 
-    // Create admin user
     adminUser = await User.create({
       fullName: 'Admin User',
       email: 'admin@example.com',
@@ -46,7 +41,6 @@ describe('User Endpoints', () => {
       isEmailVerified: true
     });
 
-    // Get tokens
     const loginRes = await request(app)
       .post('/api/auth/login')
       .send({
@@ -125,7 +119,7 @@ describe('User Endpoints', () => {
       expect(res.status).toBe(200);
       expect(res.body.success).toBe(true);
       expect(res.body.users).toBeDefined();
-      expect(res.body.count).toBe(2); // user + admin
+      expect(res.body.count).toBe(2); 
     });
 
     it('should not get all users as regular user', async () => {
@@ -149,7 +143,6 @@ describe('User Endpoints', () => {
       expect(res.body.success).toBe(true);
       expect(res.body.message).toContain('deleted successfully');
 
-      // Verify user was deleted
       const deletedUser = await User.findById(user._id);
       expect(deletedUser).toBeNull();
     });

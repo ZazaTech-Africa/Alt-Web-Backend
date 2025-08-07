@@ -17,7 +17,6 @@ const shipmentSchema = new mongoose.Schema({
     required: true,
   },
   
-  // Shipment details
   dispatcherName: {
     type: String,
     required: [true, "Dispatcher name is required"],
@@ -48,12 +47,10 @@ const shipmentSchema = new mongoose.Schema({
     default: "pending",
   },
   
-  // Delivery information
   deliveryLocation: String,
   estimatedDeliveryTime: Date,
   actualDeliveryTime: Date,
   
-  // Review and rating
   customerRating: {
     type: Number,
     min: 1,
@@ -69,7 +66,6 @@ const shipmentSchema = new mongoose.Schema({
     max: 5,
   },
   
-  // Tracking updates
   trackingUpdates: [{
     status: String,
     location: String,
@@ -84,7 +80,6 @@ const shipmentSchema = new mongoose.Schema({
   timestamps: true,
 });
 
-// Indexes
 shipmentSchema.index({ order: 1 });
 shipmentSchema.index({ user: 1 });
 shipmentSchema.index({ driver: 1 });

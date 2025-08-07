@@ -6,10 +6,8 @@ const upload = require("../middleware/upload");
 
 const router = express.Router();
 
-// All routes are protected
 router.use(auth);
 
-// Business KYC validation
 const businessKYCValidation = [
   body("businessName")
     .trim()
@@ -39,7 +37,6 @@ const businessKYCValidation = [
     .withMessage("Please specify if you want Sharperly driver orders"),
 ];
 
-// Vehicle registration validation
 const vehicleRegistrationValidation = [
   body("numberOfDrivers")
     .isInt({ min: 0 })
@@ -55,7 +52,6 @@ const vehicleRegistrationValidation = [
     .withMessage("Number of vans must be a non-negative integer"),
 ];
 
-// Routes
 router.post("/kyc", upload.single("proofOfAddress"), businessKYCValidation, businessController.submitKYC);
 router.get("/kyc", businessController.getKYC);
 router.put("/kyc", upload.single("proofOfAddress"), businessController.updateKYC);

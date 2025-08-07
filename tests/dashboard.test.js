@@ -7,7 +7,6 @@ const Order = require('../models/Order');
 const Shipment = require('../models/Shipment');
 const Driver = require('../models/Driver');
 
-// Test database connection
 beforeAll(async () => {
   const testDbUri = process.env.MONGODB_TEST_URI || 'mongodb://localhost:27017/sharperly_logistics_test';
   await mongoose.connect(testDbUri, {
@@ -16,7 +15,6 @@ beforeAll(async () => {
   });
 });
 
-// Clean up database before each test
 beforeEach(async () => {
   await User.deleteMany({});
   await Business.deleteMany({});
@@ -25,7 +23,6 @@ beforeEach(async () => {
   await Driver.deleteMany({});
 });
 
-// Close database connection after all tests
 afterAll(async () => {
   await mongoose.connection.close();
 });
@@ -36,7 +33,6 @@ describe('Dashboard Endpoints', () => {
   let token;
 
   beforeEach(async () => {
-    // Create user and business
     user = await User.create({
       fullName: 'John Doe',
       email: 'john@example.com',
@@ -144,7 +140,6 @@ describe('Dashboard Endpoints', () => {
 
   describe('GET /api/dashboard/recent-shipments', () => {
     beforeEach(async () => {
-      // Create test driver
       const driver = await Driver.create({
         fullName: 'Test Driver',
         email: 'driver@test.com',
@@ -162,7 +157,6 @@ describe('Dashboard Endpoints', () => {
         rating: 4.5
       });
 
-      // Create test order
       const order = await Order.create({
         user: user._id,
         business: business._id,
@@ -177,7 +171,6 @@ describe('Dashboard Endpoints', () => {
         status: 'delivered'
       });
 
-      // Create test shipment
       await Shipment.create({
         order: order._id,
         user: user._id,

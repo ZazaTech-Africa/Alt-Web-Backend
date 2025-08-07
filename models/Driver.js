@@ -1,7 +1,6 @@
 const mongoose = require("mongoose");
 
 const driverSchema = new mongoose.Schema({
-  // Personal information
   fullName: {
     type: String,
     required: [true, "Driver full name is required"],
@@ -21,7 +20,6 @@ const driverSchema = new mongoose.Schema({
   },
   profileImage: String,
   
-  // Driver details
   licenseNumber: {
     type: String,
     required: [true, "License number is required"],
@@ -48,7 +46,6 @@ const driverSchema = new mongoose.Schema({
     color: String,
   },
   
-  // Location
   currentLocation: {
     address: String,
     coordinates: {
@@ -61,7 +58,6 @@ const driverSchema = new mongoose.Schema({
     },
   },
   
-  // Status
   isAvailable: {
     type: Boolean,
     default: true,
@@ -75,7 +71,6 @@ const driverSchema = new mongoose.Schema({
     default: true,
   },
   
-  // Performance metrics
   rating: {
     type: Number,
     default: 0,
@@ -95,7 +90,6 @@ const driverSchema = new mongoose.Schema({
     default: 0,
   },
   
-  // Current assignment
   currentOrder: {
     type: mongoose.Schema.Types.ObjectId,
     ref: "Order",
@@ -105,7 +99,6 @@ const driverSchema = new mongoose.Schema({
   timestamps: true,
 });
 
-// Indexes
 driverSchema.index({ email: 1 });
 driverSchema.index({ licenseNumber: 1 });
 driverSchema.index({ "vehicleDetails.plateNumber": 1 });

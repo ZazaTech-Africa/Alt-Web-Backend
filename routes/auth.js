@@ -5,8 +5,6 @@ const authController = require("../controllers/authController");
 const { auth } = require("../middleware/auth");
 
 const router = express.Router();
-
-// Validation rules
 const registerValidation = [
   body("fullName")
     .trim()
@@ -88,7 +86,6 @@ const verifyEmailValidation = [
     .withMessage("Please enter a valid 6-digit code"),
 ];
 
-// Authentication routes
 router.post("/register", registerValidation, authController.register);
 router.post("/verify-email", verifyEmailValidation, authController.verifyEmail);
 router.post("/resend-verification", authController.resendVerification);
@@ -100,7 +97,6 @@ router.post("/forgot-password", forgotPasswordValidation, authController.forgotP
 router.post("/verify-reset-code", verifyResetCodeValidation, authController.verifyResetCode);
 router.post("/reset-password", resetPasswordValidation, authController.resetPassword);
 
-// Google OAuth routes
 router.get("/google", 
   passport.authenticate("google", { scope: ["profile", "email"] })
 );
@@ -110,7 +106,6 @@ router.get("/google/callback",
   authController.googleCallback
 );
 
-// Protected routes
 router.get("/me", auth, authController.getMe);
 router.put("/update-password", auth, authController.updatePassword);
 

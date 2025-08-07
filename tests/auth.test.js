@@ -3,7 +3,6 @@ const mongoose = require('mongoose');
 const app = require('../server');
 const User = require('../models/User');
 
-// Test database connection
 beforeAll(async () => {
   const testDbUri = process.env.MONGODB_TEST_URI || 'mongodb://localhost:27017/sharperly_logistics_test';
   await mongoose.connect(testDbUri, {
@@ -12,12 +11,10 @@ beforeAll(async () => {
   });
 });
 
-// Clean up database before each test
 beforeEach(async () => {
   await User.deleteMany({});
 });
 
-// Close database connection after all tests
 afterAll(async () => {
   await mongoose.connection.close();
 });
@@ -71,12 +68,10 @@ describe('Authentication Endpoints', () => {
     });
 
     it('should not register user with existing email', async () => {
-      // First registration
       await request(app)
         .post('/api/auth/register')
         .send(validUser);
 
-      // Second registration with same email
       const res = await request(app)
         .post('/api/auth/register')
         .send(validUser);
@@ -128,7 +123,6 @@ describe('Authentication Endpoints', () => {
     });
 
     it('should not login with unverified email', async () => {
-      // Create unverified user
       await User.create({
         fullName: 'Jane Doe',
         email: 'jane@example.com',
@@ -147,6 +141,82 @@ describe('Authentication Endpoints', () => {
       expect(res.body.success).toBe(false);
       expect(res.body.message).toContain('verify your email');
       expect(res.body.requiresEmailVerification).toBe(true);
+    });
+  });
+
+  describe('POST /api/auth/verify-email', () => {
+    let user;
+    let verificationCode;
+
+    beforeEach(async () => {
+      user = await User.create({
+        fullName: 'Verify User',
+        email: 'verify@example.com',
+        password: 'Password123',
+        isEmailVerified: false
+      });
+      verificationCode = user.generateEmailVerificationCode();
+      await user.save({ validateBeforeSave: false });
+    });
+
+    it('should verify email with correct code', async () => {
+      const res = await request(app)
+        .post('/api/auth/verify-email')
+        .send({
+          email: user.email,
+          verificationCode: verificationCode
+        });
+
+      expect(res.status).toBe(200);
+      expect(res.body.success).toBe(true);
+      expect(res.body.message).toContain('Email verified successfully');
+      expect(res.body.user.isEmailVerified).toBe(true);
+
+      const updatedUser = await User.findById(user._id);
+      expect(updatedUser.isEmailVerified).toBe(true);
+      expect(updatedUser.emailVerificationCode).toBeUndefined();
+      expect(updatedUser.emailVerificationExpire).toBeUndefined();
+    });
+
+    it('should not verify email with incorrect code', async () => {
+      const res = await request(app)
+        .post('/api/auth/verify-email')
+        .send({
+          email: user.email,
+          verificationCode: '000000' 
+        });
+
+      expect(res.status).toBe(400);
+      expect(res.body.success).toBe(false);
+      expect(res.body.message).toContain('Invalid or expired verification code');
+    });
+
+    it('should not verify email with expired code', async () => {
+      user.emailVerificationExpire = Date.now() - 1000;
+      await user.save({ validateBeforeSave: false });
+
+      const res = await request(app)
+        .post('/api/auth/verify-email')
+        .send({
+          email: user.email,
+          verificationCode: verificationCode
+        });
+
+      expect(res.status).toBe(400);
+      expect(res.body.success).toBe(false);
+      expect(res.body.message).toContain('Invalid or expired verification code');
+    });
+
+    it('should not verify email without code', async () => {
+      const res = await request(app)
+        .post('/api/auth/verify-email')
+        .send({
+          email: user.email
+        });
+
+      expect(res.status).toBe(400);
+      expect(res.body.success).toBe(false);
+      expect(res.body.message).toBe('Validation failed');
     });
   });
 });

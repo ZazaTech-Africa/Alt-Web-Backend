@@ -4,9 +4,6 @@ const User = require("../models/User");
 const { validationResult } = require("express-validator");
 const cloudinary = require("../config/cloudinary");
 
-// @desc    Submit business KYC
-// @route   POST /api/business/kyc
-// @access  Private
 exports.submitKYC = async (req, res) => {
   try {
     const errors = validationResult(req);
@@ -18,7 +15,6 @@ exports.submitKYC = async (req, res) => {
       });
     }
 
-    // For now, just store the filename instead of uploading to cloud
     let proofOfAddressUrl = null;
     if (req.file) {
       proofOfAddressUrl = `/uploads/${req.file.filename}`; // Local file path
@@ -34,7 +30,6 @@ exports.submitKYC = async (req, res) => {
       wantSharperlyDriverOrders,
     } = req.body;
 
-    // Create business without cloud upload
     const business = await Business.create({
       user: req.user.id,
       businessName,
@@ -47,7 +42,6 @@ exports.submitKYC = async (req, res) => {
       wantSharperlyDriverOrders: wantSharperlyDriverOrders === 'true',
     });
 
-    // Update user KYC status
     await User.findByIdAndUpdate(req.user.id, {
       hasCompletedKYC: true,
     });
@@ -60,7 +54,6 @@ exports.submitKYC = async (req, res) => {
   } catch (error) {
     console.error("Submit KYC error:", error);
     
-    // Handle duplicate CAC number
     if (error.code === 11000 && error.keyPattern?.cacRegistrationNumber) {
       return res.status(400).json({
         success: false,
@@ -75,9 +68,6 @@ exports.submitKYC = async (req, res) => {
   }
 };
 
-// @desc    Get business KYC
-// @route   GET /api/business/kyc
-// @access  Private
 exports.getKYC = async (req, res) => {
   try {
     const business = await Business.findOne({ user: req.user.id });
@@ -102,9 +92,6 @@ exports.getKYC = async (req, res) => {
   }
 };
 
-// @desc    Update business KYC
-// @route   PUT /api/business/kyc
-// @access  Private
 exports.updateKYC = async (req, res) => {
   try {
     const business = await Business.findOne({ user: req.user.id });
@@ -118,7 +105,6 @@ exports.updateKYC = async (req, res) => {
 
     const updateData = { ...req.body };
 
-    // Handle proof of address update
     if (req.file) {
       const result = await cloudinary.uploader.upload(req.file.path, {
         folder: "sharperly/proof-of-address",
@@ -127,12 +113,10 @@ exports.updateKYC = async (req, res) => {
       updateData.proofOfAddress = result.secure_url;
     }
 
-    // Parse business address if it's a string
     if (updateData.businessAddress && typeof updateData.businessAddress === 'string') {
       updateData.businessAddress = JSON.parse(updateData.businessAddress);
     }
 
-    // Convert boolean string to boolean
     if (updateData.wantSharperlyDriverOrders) {
       updateData.wantSharperlyDriverOrders = updateData.wantSharperlyDriverOrders === 'true';
     }
@@ -160,9 +144,6 @@ exports.updateKYC = async (req, res) => {
   }
 };
 
-// @desc    Register vehicles
-// @route   POST /api/business/vehicles
-// @access  Private
 exports.registerVehicles = async (req, res) => {
   try {
     const errors = validationResult(req);
@@ -174,7 +155,6 @@ exports.registerVehicles = async (req, res) => {
       });
     }
 
-    // Check if business exists
     const business = await Business.findOne({ user: req.user.id });
     if (!business) {
       return res.status(400).json({
@@ -183,7 +163,6 @@ exports.registerVehicles = async (req, res) => {
       });
     }
 
-    // Check if vehicles already registered
     const existingVehicles = await Vehicle.findOne({ user: req.user.id });
     if (existingVehicles) {
       return res.status(400).json({
@@ -199,7 +178,6 @@ exports.registerVehicles = async (req, res) => {
       numberOfVans,
     } = req.body;
 
-    // Create vehicle registration
     const vehicles = await Vehicle.create({
       user: req.user.id,
       business: business._id,
@@ -209,7 +187,6 @@ exports.registerVehicles = async (req, res) => {
       numberOfVans,
     });
 
-    // Update user vehicle registration status
     await User.findByIdAndUpdate(req.user.id, {
       hasCompletedVehicleRegistration: true,
     });
@@ -228,9 +205,6 @@ exports.registerVehicles = async (req, res) => {
   }
 };
 
-// @desc    Get vehicles
-// @route   GET /api/business/vehicles
-// @access  Private
 exports.getVehicles = async (req, res) => {
   try {
     const vehicles = await Vehicle.findOne({ user: req.user.id })
@@ -256,9 +230,6 @@ exports.getVehicles = async (req, res) => {
   }
 };
 
-// @desc    Update vehicles
-// @route   PUT /api/business/vehicles
-// @access  Private
 exports.updateVehicles = async (req, res) => {
   try {
     const errors = validationResult(req);
@@ -314,9 +285,6 @@ exports.updateVehicles = async (req, res) => {
   }
 };
 
-// @desc    Complete onboarding
-// @route   PUT /api/business/complete-onboarding
-// @access  Private
 exports.completeOnboarding = async (req, res) => {
   try {
     const user = await User.findById(req.user.id);

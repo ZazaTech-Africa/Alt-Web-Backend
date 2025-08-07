@@ -6,7 +6,6 @@ const Business = require('../models/Business');
 const Vehicle = require('../models/Vehicle');
 const path = require('path');
 
-// Test database connection
 beforeAll(async () => {
   const testDbUri = process.env.MONGODB_TEST_URI || 'mongodb://localhost:27017/sharperly_logistics_test';
   await mongoose.connect(testDbUri, {
@@ -15,14 +14,12 @@ beforeAll(async () => {
   });
 });
 
-// Clean up database before each test
 beforeEach(async () => {
   await User.deleteMany({});
   await Business.deleteMany({});
   await Vehicle.deleteMany({});
 });
 
-// Close database connection after all tests
 afterAll(async () => {
   await mongoose.connection.close();
 });
@@ -32,7 +29,6 @@ describe('Business Endpoints', () => {
   let token;
 
   beforeEach(async () => {
-    // Create and login user
     user = await User.create({
       fullName: 'John Doe',
       email: 'john@example.com',
@@ -111,7 +107,6 @@ describe('Business Endpoints', () => {
     let business;
 
     beforeEach(async () => {
-      // Create business first
       business = await Business.create({
         user: user._id,
         businessName: 'Test Logistics Ltd',
@@ -152,7 +147,6 @@ describe('Business Endpoints', () => {
     });
 
     it('should not register vehicles without completing KYC', async () => {
-      // Create user without KYC
       const newUser = await User.create({
         fullName: 'Jane Doe',
         email: 'jane@example.com',

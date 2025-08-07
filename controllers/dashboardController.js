@@ -3,46 +3,36 @@ const Shipment = require("../models/Shipment");
 const Business = require("../models/Business");
 const moment = require("moment");
 
-// @desc    Get dashboard statistics
-// @route   GET /api/dashboard/stats
-// @access  Private
 exports.getDashboardStats = async (req, res) => {
   try {
     const userId = req.user.id;
 
-    // Get total dispatch counts
     const totalDispatchCount = await Order.countDocuments({ user: userId });
 
-    // Get active dispatch counts (assigned, in_transit)
     const activeDispatchCount = await Order.countDocuments({
       user: userId,
       status: { $in: ["assigned", "in_transit"] }
     });
 
-    // Get pending dispatch counts
     const pendingDispatchCount = await Order.countDocuments({
       user: userId,
       status: "pending"
     });
 
-    // Get successful dispatch counts
     const successfulDispatchCount = await Order.countDocuments({
       user: userId,
       status: "delivered"
     });
 
-    // Get cancelled dispatch counts
     const cancelledDispatchCount = await Order.countDocuments({
       user: userId,
       status: "cancelled"
     });
 
-    // Calculate success rate
     const successRate = totalDispatchCount > 0 
       ? ((successfulDispatchCount / totalDispatchCount) * 100).toFixed(2)
       : 0;
 
-    // Get total revenue (sum of actual costs for delivered orders)
     const revenueResult = await Order.aggregate([
       {
         $match: {
@@ -82,9 +72,6 @@ exports.getDashboardStats = async (req, res) => {
   }
 };
 
-// @desc    Get dispatch sales statistics
-// @route   GET /api/dashboard/dispatch-sales
-// @access  Private
 exports.getDispatchSalesStats = async (req, res) => {
   try {
     const userId = req.user.id;
@@ -93,7 +80,6 @@ exports.getDispatchSalesStats = async (req, res) => {
     let startDate;
     let groupBy;
 
-    // Determine date range and grouping based on period
     switch (period) {
       case "24hours":
         startDate = moment().subtract(24, "hours").toDate();
@@ -116,7 +102,6 @@ exports.getDispatchSalesStats = async (req, res) => {
         groupBy = { $dayOfWeek: "$createdAt" };
     }
 
-    // Get sales data
     const salesData = await Order.aggregate([
       {
         $match: {
@@ -138,7 +123,6 @@ exports.getDispatchSalesStats = async (req, res) => {
       }
     ]);
 
-    // Get order trends
     const orderTrends = await Order.aggregate([
       {
         $match: {
@@ -186,9 +170,6 @@ exports.getDispatchSalesStats = async (req, res) => {
   }
 };
 
-// @desc    Get recent shipments
-// @route   GET /api/dashboard/recent-shipments
-// @access  Private
 exports.getRecentShipments = async (req, res) => {
   try {
     const userId = req.user.id;
@@ -244,9 +225,6 @@ exports.getRecentShipments = async (req, res) => {
   }
 };
 
-// @desc    Get dispatch history
-// @route   GET /api/dashboard/history
-// @access  Private
 exports.getDispatchHistory = async (req, res) => {
   try {
     const userId = req.user.id;
@@ -261,7 +239,6 @@ exports.getDispatchHistory = async (req, res) => {
 
     const skip = (page - 1) * limit;
 
-    // Build query
     let query = { user: userId };
 
     if (status && status !== "all") {
@@ -311,14 +288,10 @@ exports.getDispatchHistory = async (req, res) => {
   }
 };
 
-// @desc    Get dispatcher details
-// @route   GET /api/dashboard/dispatcher-details
-// @access  Private
 exports.getDispatcherDetails = async (req, res) => {
   try {
     const userId = req.user.id;
 
-    // Get user and business details
     const user = await User.findById(userId);
     const business = await Business.findOne({ user: userId });
 
@@ -329,7 +302,6 @@ exports.getDispatcherDetails = async (req, res) => {
       });
     }
 
-    // Get performance metrics
     const totalOrders = await Order.countDocuments({ user: userId });
     const completedOrders = await Order.countDocuments({ 
       user: userId, 
@@ -340,12 +312,10 @@ exports.getDispatcherDetails = async (req, res) => {
       status: "cancelled" 
     });
 
-    // Calculate completion rate
     const completionRate = totalOrders > 0 
       ? ((completedOrders / totalOrders) * 100).toFixed(2)
       : 0;
 
-    // Get average delivery time for completed orders
     const avgDeliveryTime = await Order.aggregate([
       {
         $match: {
@@ -360,7 +330,7 @@ exports.getDispatcherDetails = async (req, res) => {
           deliveryTime: {
             $divide: [
               { $subtract: ["$actualDeliveryDate", "$createdAt"] },
-              1000 * 60 * 60 * 24 // Convert to days
+              1000 * 60 * 60 * 24 
             ]
           }
         }
