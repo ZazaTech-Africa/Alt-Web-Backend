@@ -1,0 +1,119 @@
+const express = require('express');
+const mongoose = require('mongoose');
+const cors = require('cors');
+const helmet = require('helmet');
+const morgan = require('morgan');
+const rateLimit = require('express-rate-limit');
+const cookieParser = require('cookie-parser');
+const fileUpload = require('express-fileupload');
+const passport = require('passport');
+require('dotenv').config();
+
+const authRoutes = require('./routes/auth');
+const userRoutes = require('./routes/users');
+const businessRoutes = require('./routes/business');
+const dashboardRoutes = require('./routes/dashboard');
+const orderRoutes = require('./routes/orders');
+const driverRoutes = require('./routes/drivers');
+const shipmentRoutes = require('./routes/shipments');
+
+const errorHandler = require('./middleware/errorHandler');
+
+require('./config/passport');
+
+const app = express();
+
+app.use(helmet());
+
+const limiter = rateLimit({
+  windowMs: 15 * 60 * 1000, 
+  max: 100, 
+  message: {
+    success: false,
+    message: "Too many requests from this IP, please try again later."
+  }
+});
+app.use(limiter);
+
+app.use(cors({
+  origin: [
+    process.env.FRONTEND_URL || "http://localhost:3000",
+    "https://your-frontend-domain.com"
+  ],
+  credentials: true,
+}));
+
+app.use(express.json({ limit: "10mb" }));
+app.use(express.urlencoded({ extended: true }));
+app.use(cookieParser());
+
+app.use(fileUpload({
+  useTempFiles: true,
+  tempFileDir: '/tmp/',
+  limits: { fileSize: process.env.MAX_FILE_SIZE || 5 * 1024 * 1024 }, // 5MB
+}));
+
+app.use(passport.initialize());
+
+if (process.env.NODE_ENV === "development") {
+  app.use(morgan("dev"));
+}
+
+const connectDB = async () => {
+  try {
+    const dbURI = process.env.NODE_ENV === 'test' 
+      ? process.env.MONGODB_TEST_URI 
+      : process.env.MONGODB_URI;
+    
+    await mongoose.connect(dbURI, {
+      useNewUrlParser: true,
+      useUnifiedTopology: true,
+    });
+    
+    console.log(`✅ MongoDB connected successfully (${process.env.NODE_ENV})`);
+  } catch (error) {
+    console.error("❌ MongoDB connection error:", error);
+    process.exit(1);
+  }
+};
+
+connectDB();
+
+app.use("/api/auth", authRoutes);
+app.use("/api/users", userRoutes);
+app.use("/api/business", businessRoutes);
+app.use("/api/dashboard", dashboardRoutes);
+app.use("/api/orders", orderRoutes);
+app.use("/api/drivers", driverRoutes);
+app.use("/api/shipments", shipmentRoutes);
+
+app.get("/api/health", (req, res) => {
+  res.status(200).json({
+    success: true,
+    message: "SHARPERLY Logistics API is running!",
+    timestamp: new Date().toISOString(),
+    environment: process.env.NODE_ENV,
+    version: "1.0.0"
+  });
+});
+
+app.use("*", (req, res) => {
+  res.status(404).json({
+    success: false,
+    message: "API endpoint not found",
+  });
+});
+
+app.use(errorHandler);
+
+const PORT = process.env.PORT || 5000;
+
+if (process.env.NODE_ENV !== 'test') {
+  app.listen(PORT, () => {
+    console.log(`🚀 SHARPERLY Logistics Server running on port ${PORT}`);
+    console.log(`📍 Environment: ${process.env.NODE_ENV}`);
+    console.log(`🌐 API Base URL: http://localhost:${PORT}/api`);
+  });
+}
+
+module.exports = app;

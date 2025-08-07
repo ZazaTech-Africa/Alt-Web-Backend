@@ -4,12 +4,14 @@ const crypto = require("crypto");
 const { validationResult } = require("express-validator");
 const sendEmail = require("../utils/sendEmail");
 
+// Generate JWT Token
 const generateToken = (id) => {
   return jwt.sign({ id }, process.env.JWT_SECRET, {
     expiresIn: process.env.JWT_EXPIRE || "7d",
   });
 };
 
+// Send token response
 const sendTokenResponse = (user, statusCode, res, message = "Success") => {
   const token = generateToken(user._id);
 
@@ -40,12 +42,17 @@ const sendTokenResponse = (user, statusCode, res, message = "Success") => {
         role: user.role,
         isEmailVerified: user.isEmailVerified,
         profileImage: user.profileImage,
+        hasCompletedOnboarding: user.hasCompletedOnboarding,
+        hasCompletedKYC: user.hasCompletedKYC,
+        hasCompletedVehicleRegistration: user.hasCompletedVehicleRegistration,
         lastLogin: user.lastLogin,
       },
     });
 };
 
-
+// @desc    Register user
+// @route   POST /api/auth/register
+// @access  Public
 exports.register = async (req, res) => {
   try {
     const errors = validationResult(req);
@@ -59,6 +66,7 @@ exports.register = async (req, res) => {
 
     const { fullName, email, password } = req.body;
 
+    // Check if user already exists
     const existingUser = await User.findOne({ email });
     if (existingUser) {
       return res.status(400).json({
@@ -67,15 +75,18 @@ exports.register = async (req, res) => {
       });
     }
 
+    // Create user
     const user = await User.create({
       fullName,
       email,
       password,
     });
 
+    // Generate email verification code
     const verificationCode = user.generateEmailVerificationCode();
     await user.save({ validateBeforeSave: false });
 
+    // Send verification email
     try {
       const message = `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
@@ -132,6 +143,9 @@ exports.register = async (req, res) => {
   }
 };
 
+// @desc    Verify email with code
+// @route   POST /api/auth/verify-email
+// @access  Public
 exports.verifyEmail = async (req, res) => {
   try {
     const errors = validationResult(req);
@@ -145,6 +159,7 @@ exports.verifyEmail = async (req, res) => {
 
     const { email, code } = req.body;
 
+    // Hash the provided code
     const hashedCode = crypto.createHash("sha256").update(code).digest("hex");
 
     const user = await User.findOne({
@@ -160,6 +175,7 @@ exports.verifyEmail = async (req, res) => {
       });
     }
 
+    // Update user
     user.isEmailVerified = true;
     user.emailVerificationCode = undefined;
     user.emailVerificationExpire = undefined;
@@ -176,6 +192,9 @@ exports.verifyEmail = async (req, res) => {
   }
 };
 
+// @desc    Resend verification code
+// @route   POST /api/auth/resend-verification
+// @access  Public
 exports.resendVerification = async (req, res) => {
   try {
     const { email } = req.body;
@@ -196,10 +215,11 @@ exports.resendVerification = async (req, res) => {
       });
     }
 
+    // Generate new verification code
     const verificationCode = user.generateEmailVerificationCode();
     await user.save({ validateBeforeSave: false });
 
-
+    // Send verification email
     const message = `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
         <h1 style="color: #dc2626; text-align: center;">Email Verification</h1>
@@ -230,6 +250,9 @@ exports.resendVerification = async (req, res) => {
   }
 };
 
+// @desc    Login user
+// @route   POST /api/auth/login
+// @access  Public
 exports.login = async (req, res) => {
   try {
     const errors = validationResult(req);
@@ -243,6 +266,7 @@ exports.login = async (req, res) => {
 
     const { email, password } = req.body;
 
+    // Check for user and include password
     const user = await User.findOne({ email }).select("+password");
 
     if (!user) {
@@ -252,6 +276,7 @@ exports.login = async (req, res) => {
       });
     }
 
+    // Check if password matches
     const isMatch = await user.comparePassword(password);
 
     if (!isMatch) {
@@ -261,6 +286,7 @@ exports.login = async (req, res) => {
       });
     }
 
+    // Check if account is active
     if (!user.isActive) {
       return res.status(401).json({
         success: false,
@@ -268,6 +294,7 @@ exports.login = async (req, res) => {
       });
     }
 
+    // Check if email is verified
     if (!user.isEmailVerified) {
       return res.status(401).json({
         success: false,
@@ -276,6 +303,7 @@ exports.login = async (req, res) => {
       });
     }
 
+    // Update last login
     await user.updateLastLogin();
 
     sendTokenResponse(user, 200, res, "Login successful! Welcome back to SHARPERLY!");
@@ -288,6 +316,9 @@ exports.login = async (req, res) => {
   }
 };
 
+// @desc    Logout user
+// @route   POST /api/auth/logout
+// @access  Private
 exports.logout = async (req, res) => {
   res.cookie("token", "none", {
     expires: new Date(Date.now() + 10 * 1000),
@@ -300,6 +331,9 @@ exports.logout = async (req, res) => {
   });
 };
 
+// @desc    Forgot password - send reset code
+// @route   POST /api/auth/forgot-password
+// @access  Public
 exports.forgotPassword = async (req, res) => {
   try {
     const errors = validationResult(req);
@@ -320,9 +354,11 @@ exports.forgotPassword = async (req, res) => {
       });
     }
 
+    // Generate reset code
     const resetCode = user.generatePasswordResetCode();
     await user.save({ validateBeforeSave: false });
 
+    // Send reset email
     const message = `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
         <h1 style="color: #dc2626; text-align: center;">Password Reset Request</h1>
@@ -370,6 +406,9 @@ exports.forgotPassword = async (req, res) => {
   }
 };
 
+// @desc    Verify reset code
+// @route   POST /api/auth/verify-reset-code
+// @access  Public
 exports.verifyResetCode = async (req, res) => {
   try {
     const errors = validationResult(req);
@@ -383,7 +422,7 @@ exports.verifyResetCode = async (req, res) => {
 
     const { email, code } = req.body;
 
-    
+    // Hash the provided code
     const hashedCode = crypto.createHash("sha256").update(code).digest("hex");
 
     const user = await User.findOne({
@@ -412,6 +451,9 @@ exports.verifyResetCode = async (req, res) => {
   }
 };
 
+// @desc    Reset password with code
+// @route   POST /api/auth/reset-password
+// @access  Public
 exports.resetPassword = async (req, res) => {
   try {
     const errors = validationResult(req);
@@ -425,6 +467,7 @@ exports.resetPassword = async (req, res) => {
 
     const { email, code, password } = req.body;
 
+    // Hash the provided code
     const hashedCode = crypto.createHash("sha256").update(code).digest("hex");
 
     const user = await User.findOne({
@@ -440,7 +483,7 @@ exports.resetPassword = async (req, res) => {
       });
     }
 
-    
+    // Set new password
     user.password = password;
     user.passwordResetCode = undefined;
     user.passwordResetExpire = undefined;
@@ -457,14 +500,16 @@ exports.resetPassword = async (req, res) => {
   }
 };
 
-
+// @desc    Google OAuth callback
+// @route   GET /api/auth/google/callback
+// @access  Public
 exports.googleCallback = async (req, res) => {
   try {
     await req.user.updateLastLogin();
     
     const token = generateToken(req.user._id);
     
-
+    // Redirect to frontend with token
     res.redirect(`${process.env.FRONTEND_URL}/auth/success?token=${token}`);
   } catch (error) {
     console.error("Google callback error:", error);
@@ -472,6 +517,9 @@ exports.googleCallback = async (req, res) => {
   }
 };
 
+// @desc    Get current logged in user
+// @route   GET /api/auth/me
+// @access  Private
 exports.getMe = async (req, res) => {
   try {
     const user = await User.findById(req.user.id);
@@ -485,8 +533,10 @@ exports.getMe = async (req, res) => {
         role: user.role,
         isEmailVerified: user.isEmailVerified,
         profileImage: user.profileImage,
-        phoneNumber: user.phoneNumber,
-        address: user.address,
+        about: user.about,
+        hasCompletedOnboarding: user.hasCompletedOnboarding,
+        hasCompletedKYC: user.hasCompletedKYC,
+        hasCompletedVehicleRegistration: user.hasCompletedVehicleRegistration,
         lastLogin: user.lastLogin,
         createdAt: user.createdAt,
       },
@@ -500,11 +550,14 @@ exports.getMe = async (req, res) => {
   }
 };
 
+// @desc    Update password
+// @route   PUT /api/auth/update-password
+// @access  Private
 exports.updatePassword = async (req, res) => {
   try {
     const user = await User.findById(req.user.id).select("+password");
 
-    
+    // Check current password
     if (!(await user.comparePassword(req.body.currentPassword))) {
       return res.status(401).json({
         success: false,

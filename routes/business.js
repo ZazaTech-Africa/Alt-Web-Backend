@@ -1,0 +1,69 @@
+const express = require("express");
+const { body } = require("express-validator");
+const businessController = require("../controllers/businessController");
+const { auth } = require("../middleware/auth");
+const upload = require("../middleware/upload");
+
+const router = express.Router();
+
+// All routes are protected
+router.use(auth);
+
+// Business KYC validation
+const businessKYCValidation = [
+  body("businessName")
+    .trim()
+    .isLength({ min: 2, max: 200 })
+    .withMessage("Business name must be between 2 and 200 characters"),
+  body("businessEmail")
+    .isEmail()
+    .normalizeEmail()
+    .withMessage("Please enter a valid business email address"),
+  body("businessAddress.street")
+    .notEmpty()
+    .withMessage("Street address is required"),
+  body("businessAddress.city")
+    .notEmpty()
+    .withMessage("City is required"),
+  body("businessAddress.state")
+    .notEmpty()
+    .withMessage("State is required"),
+  body("cacRegistrationNumber")
+    .notEmpty()
+    .withMessage("CAC registration number is required"),
+  body("businessHotline")
+    .matches(/^[\+]?[1-9][\d]{0,15}$/)
+    .withMessage("Please enter a valid business hotline"),
+  body("wantSharperlyDriverOrders")
+    .isBoolean()
+    .withMessage("Please specify if you want Sharperly driver orders"),
+];
+
+// Vehicle registration validation
+const vehicleRegistrationValidation = [
+  body("numberOfDrivers")
+    .isInt({ min: 0 })
+    .withMessage("Number of drivers must be a non-negative integer"),
+  body("numberOfCars")
+    .isInt({ min: 0 })
+    .withMessage("Number of cars must be a non-negative integer"),
+  body("numberOfBikes")
+    .isInt({ min: 0 })
+    .withMessage("Number of bikes must be a non-negative integer"),
+  body("numberOfVans")
+    .isInt({ min: 0 })
+    .withMessage("Number of vans must be a non-negative integer"),
+];
+
+// Routes
+router.post("/kyc", upload.single("proofOfAddress"), businessKYCValidation, businessController.submitKYC);
+router.get("/kyc", businessController.getKYC);
+router.put("/kyc", upload.single("proofOfAddress"), businessController.updateKYC);
+
+router.post("/vehicles", vehicleRegistrationValidation, businessController.registerVehicles);
+router.get("/vehicles", businessController.getVehicles);
+router.put("/vehicles", vehicleRegistrationValidation, businessController.updateVehicles);
+
+router.put("/complete-onboarding", businessController.completeOnboarding);
+
+module.exports = router;
