@@ -11,6 +11,7 @@ const sendEmail = async (options) => {
     },
   });
 
+  // Verify the connection configuration
   const mailOptions = {
     from: `SHARPERLY <${process.env.EMAIL_FROM}>`,
     to: options.email,
