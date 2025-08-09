@@ -143,7 +143,7 @@ describe('Business Endpoints', () => {
       expect(res.body.success).toBe(true);
       expect(res.body.message).toContain('Vehicles registered successfully');
       expect(res.body.vehicles.numberOfDrivers).toBe(validVehicleData.numberOfDrivers);
-      expect(res.body.vehicles.totalVehicles).toBe(6); // 3+2+1
+      expect(res.body.vehicles.totalVehicles).toBe(6);
     });
 
     it('should not register vehicles without completing KYC', async () => {

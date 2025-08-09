@@ -69,7 +69,7 @@ describe('Dashboard Endpoints', () => {
 
   describe('GET /api/dashboard/stats', () => {
     beforeEach(async () => {
-      // Create test orders
+      
       await Order.create([
         {
           user: user._id,
