@@ -38,7 +38,7 @@ app.use(limiter);
 app.use(cors({
   origin: [
     process.env.FRONTEND_URL || "http://localhost:3000",
-    "https://your-frontend-domain.com"
+    "https://alt-web-phi.vercel.app"
   ],
   credentials: true,
 }));
@@ -50,7 +50,7 @@ app.use(cookieParser());
 app.use(fileUpload({
   useTempFiles: true,
   tempFileDir: '/tmp/',
-  limits: { fileSize: process.env.MAX_FILE_SIZE || 5 * 1024 * 1024 }, // 5MB
+  limits: { fileSize: process.env.MAX_FILE_SIZE || 5 * 1024 * 1024 }, 
 }));
 
 app.use(passport.initialize());
@@ -65,10 +65,7 @@ const connectDB = async () => {
       ? process.env.MONGODB_TEST_URI 
       : process.env.MONGODB_URI;
     
-    await mongoose.connect(dbURI, {
-      useNewUrlParser: true,
-      useUnifiedTopology: true,
-    });
+    await mongoose.connect(dbURI);
     
     console.log(`✅ MongoDB connected successfully (${process.env.NODE_ENV})`);
   } catch (error) {

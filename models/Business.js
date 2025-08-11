@@ -4,7 +4,7 @@ const businessSchema = new mongoose.Schema({
   user: {
     type: mongoose.Schema.Types.ObjectId,
     ref: "User",
-    required: true,
+    required: [true, "Business must be associated with a user"],
     unique: true,
   },
   businessName: {
@@ -64,7 +64,6 @@ const businessSchema = new mongoose.Schema({
     required: [true, "Please specify if you want Sharperly to give your drivers orders"],
     default: false,
   },
-  
   isVerified: {
     type: Boolean,
     default: false,
@@ -75,7 +74,6 @@ const businessSchema = new mongoose.Schema({
     default: "pending",
   },
   verificationNotes: String,
-  
   totalOrders: {
     type: Number,
     default: 0,
@@ -90,13 +88,10 @@ const businessSchema = new mongoose.Schema({
     min: 0,
     max: 5,
   },
-  
 }, {
   timestamps: true,
 });
 
-businessSchema.index({ user: 1 });
-businessSchema.index({ cacRegistrationNumber: 1 });
 businessSchema.index({ businessEmail: 1 });
 businessSchema.index({ verificationStatus: 1 });
 

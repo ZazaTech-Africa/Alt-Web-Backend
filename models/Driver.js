@@ -9,7 +9,7 @@ const driverSchema = new mongoose.Schema({
   email: {
     type: String,
     required: [true, "Driver email is required"],
-    unique: true,
+    unique: true, 
     lowercase: true,
     trim: true,
   },
@@ -19,11 +19,10 @@ const driverSchema = new mongoose.Schema({
     match: [/^[\+]?[1-9][\d]{0,15}$/, "Please enter a valid phone number"],
   },
   profileImage: String,
-  
   licenseNumber: {
     type: String,
     required: [true, "License number is required"],
-    unique: true,
+    unique: true, 
   },
   licenseExpiry: {
     type: Date,
@@ -45,7 +44,6 @@ const driverSchema = new mongoose.Schema({
     },
     color: String,
   },
-  
   currentLocation: {
     address: String,
     coordinates: {
@@ -57,7 +55,6 @@ const driverSchema = new mongoose.Schema({
       default: Date.now,
     },
   },
-  
   isAvailable: {
     type: Boolean,
     default: true,
@@ -70,7 +67,6 @@ const driverSchema = new mongoose.Schema({
     type: Boolean,
     default: true,
   },
-  
   rating: {
     type: Number,
     default: 0,
@@ -89,19 +85,14 @@ const driverSchema = new mongoose.Schema({
     type: Number,
     default: 0,
   },
-  
   currentOrder: {
     type: mongoose.Schema.Types.ObjectId,
     ref: "Order",
   },
-  
 }, {
   timestamps: true,
 });
 
-driverSchema.index({ email: 1 });
-driverSchema.index({ licenseNumber: 1 });
-driverSchema.index({ "vehicleDetails.plateNumber": 1 });
 driverSchema.index({ vehicleType: 1 });
 driverSchema.index({ isAvailable: 1 });
 driverSchema.index({ isVerified: 1 });

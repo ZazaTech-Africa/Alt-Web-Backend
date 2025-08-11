@@ -11,10 +11,9 @@ const orderSchema = new mongoose.Schema({
     ref: "Business",
     required: true,
   },
-  
   orderNumber: {
     type: String,
-    unique: true,
+    unique: true, 
     required: true,
   },
   itemsCount: {
@@ -32,7 +31,6 @@ const orderSchema = new mongoose.Schema({
     required: [true, "Quantity is required"],
     min: [1, "Quantity must be at least 1"],
   },
-  
   pickupLocation: {
     address: {
       type: String,
@@ -57,7 +55,6 @@ const orderSchema = new mongoose.Schema({
     contactPerson: String,
     contactPhone: String,
   },
-  
   orderDate: {
     type: Date,
     default: Date.now,
@@ -68,7 +65,6 @@ const orderSchema = new mongoose.Schema({
   },
   actualDispatchDate: Date,
   actualDeliveryDate: Date,
-  
   assignedDriver: {
     type: mongoose.Schema.Types.ObjectId,
     ref: "Driver",
@@ -78,25 +74,21 @@ const orderSchema = new mongoose.Schema({
     enum: ["car", "bike", "van"],
     required: [true, "Vehicle type is required"],
   },
-  
   status: {
     type: String,
     enum: ["pending", "assigned", "in_transit", "delivered", "cancelled"],
     default: "pending",
   },
-  
   estimatedCost: {
     type: Number,
     required: [true, "Estimated cost is required"],
     min: [0, "Cost cannot be negative"],
   },
   actualCost: Number,
-  
   trackingNumber: {
     type: String,
-    unique: true,
+    unique: true, 
   },
-  
   notes: String,
   statusHistory: [{
     status: String,
@@ -106,7 +98,6 @@ const orderSchema = new mongoose.Schema({
     },
     notes: String,
   }],
-  
 }, {
   timestamps: true,
 });
@@ -136,8 +127,6 @@ orderSchema.pre("save", function(next) {
 
 orderSchema.index({ user: 1 });
 orderSchema.index({ business: 1 });
-orderSchema.index({ orderNumber: 1 });
-orderSchema.index({ trackingNumber: 1 });
 orderSchema.index({ status: 1 });
 orderSchema.index({ assignedDriver: 1 });
 

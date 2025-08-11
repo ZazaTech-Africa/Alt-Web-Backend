@@ -38,7 +38,6 @@ const userSchema = new mongoose.Schema({
     type: String,
     maxlength: [500, "About section cannot exceed 500 characters"],
   },
-  
   isEmailVerified: {
     type: Boolean,
     default: false,
@@ -47,7 +46,6 @@ const userSchema = new mongoose.Schema({
     type: Boolean,
     default: true,
   },
-  
   hasCompletedOnboarding: {
     type: Boolean,
     default: false,
@@ -64,15 +62,14 @@ const userSchema = new mongoose.Schema({
     type: Boolean,
     default: false,
   },
-  
   emailVerificationCode: String,
   emailVerificationExpire: Date,
-  
   passwordResetCode: String,
   passwordResetExpire: Date,
-  
-  googleId: String,
-  
+  googleId: {
+    type: String,
+    unique: true,
+  },
   lastLogin: {
     type: Date,
     default: null,
@@ -81,10 +78,8 @@ const userSchema = new mongoose.Schema({
   timestamps: true,
 });
 
-userSchema.index({ email: 1 });
-userSchema.index({ googleId: 1 });
 userSchema.index({ emailVerificationCode: 1 });
-userSchema.index({ passwordResetCode: 1 });
+userSchema.index({ passwordResetCode: 1 });   
 
 userSchema.pre("save", async function (next) {
   if (!this.isModified("password") || !this.password) return next();
