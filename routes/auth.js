@@ -47,7 +47,7 @@ const verifyResetCodeValidation = [
     .isEmail()
     .normalizeEmail()
     .withMessage("Please enter a valid email address"),
-  body("code")
+  body("verificationCode")
     .isLength({ min: 6, max: 6 })
     .isNumeric()
     .withMessage("Please enter a valid 6-digit code"),
@@ -58,7 +58,7 @@ const resetPasswordValidation = [
     .isEmail()
     .normalizeEmail()
     .withMessage("Please enter a valid email address"),
-  body("code")
+  body("verificationCode")
     .isLength({ min: 6, max: 6 })
     .isNumeric()
     .withMessage("Please enter a valid 6-digit code"),
@@ -80,7 +80,7 @@ const verifyEmailValidation = [
     .isEmail()
     .normalizeEmail()
     .withMessage("Please enter a valid email address"),
-  body("code")
+  body("verificationCode")
     .isLength({ min: 6, max: 6 })
     .isNumeric()
     .withMessage("Please enter a valid 6-digit code"),
