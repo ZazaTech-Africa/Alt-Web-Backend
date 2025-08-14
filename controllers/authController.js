@@ -199,7 +199,7 @@ exports.verifyEmail = async (req, res) => {
       });
     }
 
-    const { email, verificationCode } = req.body;
+    const { verificationCode } = req.body;
 
     const hashedCode = crypto
       .createHash("sha256")
@@ -207,7 +207,6 @@ exports.verifyEmail = async (req, res) => {
       .digest("hex");
 
     const user = await User.findOne({
-      email,
       emailVerificationCode: hashedCode,
       emailVerificationExpire: { $gt: Date.now() },
     });
@@ -236,16 +235,7 @@ exports.verifyEmail = async (req, res) => {
 
 exports.resendVerification = async (req, res) => {
   try {
-    const { email } = req.body;
-
-    const user = await User.findOne({ email });
-
-    if (!user) {
-      return res.status(404).json({
-        success: false,
-        message: "User not found with this email.",
-      });
-    }
+    const user = req.user;
 
     if (user.isEmailVerified) {
       return res.status(400).json({
@@ -339,6 +329,7 @@ exports.forgotPassword = async (req, res) => {
       res.status(200).json({
         success: true,
         message: "Password reset code sent to your email.",
+        email: user.email
       });
     } catch (error) {
       console.error("Password reset email failed:", error);
@@ -370,15 +361,14 @@ exports.verifyResetCode = async (req, res) => {
       });
     }
 
-    const { email, code } = req.body;
+    const { verificationCode } = req.body;
 
     const hashedCode = crypto
       .createHash("sha256")
-      .update(code)
+      .update(verificationCode)
       .digest("hex");
 
     const user = await User.findOne({
-      email,
       passwordResetCode: hashedCode,
       passwordResetExpire: { $gt: Date.now() },
     });
@@ -414,15 +404,14 @@ exports.resetPassword = async (req, res) => {
       });
     }
 
-    const { email, code, password, confirmPassword } = req.body;
+    const { verificationCode, password, confirmPassword } = req.body;
 
     const hashedCode = crypto
       .createHash("sha256")
-      .update(code)
+      .update(verificationCode)
       .digest("hex");
 
     const user = await User.findOne({
-      email,
       passwordResetCode: hashedCode,
       passwordResetExpire: { $gt: Date.now() },
     });

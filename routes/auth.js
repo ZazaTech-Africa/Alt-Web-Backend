@@ -43,10 +43,6 @@ const forgotPasswordValidation = [
 ];
 
 const verifyResetCodeValidation = [
-  body("email")
-    .isEmail()
-    .normalizeEmail()
-    .withMessage("Please enter a valid email address"),
   body("verificationCode")
     .isLength({ min: 6, max: 6 })
     .isNumeric()
@@ -54,10 +50,6 @@ const verifyResetCodeValidation = [
 ];
 
 const resetPasswordValidation = [
-  body("email")
-    .isEmail()
-    .normalizeEmail()
-    .withMessage("Please enter a valid email address"),
   body("verificationCode")
     .isLength({ min: 6, max: 6 })
     .isNumeric()
@@ -76,10 +68,6 @@ const resetPasswordValidation = [
 ];
 
 const verifyEmailValidation = [
-  body("email")
-    .isEmail()
-    .normalizeEmail()
-    .withMessage("Please enter a valid email address"),
   body("verificationCode")
     .isLength({ min: 6, max: 6 })
     .isNumeric()
@@ -88,7 +76,7 @@ const verifyEmailValidation = [
 
 router.post("/register", registerValidation, authController.register);
 router.post("/verify-email", verifyEmailValidation, authController.verifyEmail);
-router.post("/resend-verification", authController.resendVerification);
+router.post("/resend-verification", auth, authController.resendVerification);
 
 router.post("/login", loginValidation, authController.login);
 router.post("/logout", authController.logout);

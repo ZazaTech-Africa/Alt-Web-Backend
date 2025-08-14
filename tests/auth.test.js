@@ -163,7 +163,6 @@ describe('Authentication Endpoints', () => {
       const res = await request(app)
         .post('/api/auth/verify-email')
         .send({
-          email: user.email,
           verificationCode: verificationCode
         });
 
@@ -182,7 +181,6 @@ describe('Authentication Endpoints', () => {
       const res = await request(app)
         .post('/api/auth/verify-email')
         .send({
-          email: user.email,
           verificationCode: '000000' 
         });
 
@@ -198,7 +196,6 @@ describe('Authentication Endpoints', () => {
       const res = await request(app)
         .post('/api/auth/verify-email')
         .send({
-          email: user.email,
           verificationCode: verificationCode
         });
 
@@ -210,9 +207,7 @@ describe('Authentication Endpoints', () => {
     it('should not verify email without code', async () => {
       const res = await request(app)
         .post('/api/auth/verify-email')
-        .send({
-          email: user.email
-        });
+        .send({});
 
       expect(res.status).toBe(400);
       expect(res.body.success).toBe(false);
