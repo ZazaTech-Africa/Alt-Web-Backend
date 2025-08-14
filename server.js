@@ -26,8 +26,8 @@ const app = express();
 app.use(helmet());
 
 const limiter = rateLimit({
-  windowMs: 15 * 60 * 1000, 
-  max: 100, 
+  windowMs: 15 * 60 * 1000,
+  max: 100,
   message: {
     success: false,
     message: "Too many requests from this IP, please try again later."
@@ -35,13 +35,27 @@ const limiter = rateLimit({
 });
 app.use(limiter);
 
+const allowedOrigins = [
+  "http://localhost:3000",
+  "http://localhost:5173",
+  "https://alt-web-phi.vercel.app",
+  process.env.FRONTEND_URL
+].filter(Boolean);
+
 app.use(cors({
-  origin: [
-    process.env.FRONTEND_URL || "http://localhost:3000",
-    "https://alt-web-phi.vercel.app"
-  ],
+  origin: function (origin, callback) {
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error("Not allowed by CORS"));
+    }
+  },
+  methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization"],
   credentials: true,
 }));
+
+app.options("*", cors());
 
 app.use(express.json({ limit: "10mb" }));
 app.use(express.urlencoded({ extended: true }));
@@ -50,7 +64,7 @@ app.use(cookieParser());
 app.use(fileUpload({
   useTempFiles: true,
   tempFileDir: '/tmp/',
-  limits: { fileSize: process.env.MAX_FILE_SIZE || 5 * 1024 * 1024 }, 
+  limits: { fileSize: process.env.MAX_FILE_SIZE || 5 * 1024 * 1024 },
 }));
 
 app.use(passport.initialize());
@@ -61,12 +75,12 @@ if (process.env.NODE_ENV === "development") {
 
 const connectDB = async () => {
   try {
-    const dbURI = process.env.NODE_ENV === 'test' 
-      ? process.env.MONGODB_TEST_URI 
+    const dbURI = process.env.NODE_ENV === 'test'
+      ? process.env.MONGODB_TEST_URI
       : process.env.MONGODB_URI;
-    
-    await mongoose.connect(dbURI);
-    
+
+    await mongoose.connect(dbURI, { dbName: "alt-web-app" });
+
     console.log(`✅ MongoDB connected successfully (${process.env.NODE_ENV})`);
   } catch (error) {
     console.error("❌ MongoDB connection error:", error);
