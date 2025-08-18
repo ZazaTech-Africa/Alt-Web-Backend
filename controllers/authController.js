@@ -107,6 +107,7 @@ exports.register = async (req, res) => {
         html: message,
       });
 
+      // Return token response immediately after registration
       return sendTokenResponse(user, 201, res, "Registration successful! Please check your email for the verification code.");
     } catch (error) {
       console.error("Email sending failed:", error);

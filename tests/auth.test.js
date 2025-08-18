@@ -36,6 +36,7 @@ describe('Authentication Endpoints', () => {
       expect(res.status).toBe(201);
       expect(res.body.success).toBe(true);
       expect(res.body.message).toContain('Registration successful');
+      expect(res.body.token).toBeDefined();
       expect(res.body.user.email).toBe(validUser.email);
       expect(res.body.user.fullName).toBe(validUser.fullName);
       expect(res.body.user.isEmailVerified).toBe(false);
