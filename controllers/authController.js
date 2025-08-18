@@ -193,14 +193,12 @@ exports.verifyEmail = async (req, res) => {
 
 exports.resendVerification = async (req, res) => {
   try {
-    const { email } = req.body;
-
-    const user = await User.findOne({ email });
+    const user = await User.findById(req.user.id);
 
     if (!user) {
       return res.status(404).json({
         success: false,
-        message: "User not found with this email.",
+        message: "User not found.",
       });
     }
 
