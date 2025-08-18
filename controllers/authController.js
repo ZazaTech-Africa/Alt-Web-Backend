@@ -107,32 +107,10 @@ exports.register = async (req, res) => {
         html: message,
       });
 
-      res.status(201).json({
-        success: true,
-        message: "Registration successful! Please check your email for the verification code.",
-        token,
-        user: {
-          id: user._id,
-          fullName: user.fullName,
-          email: user.email,
-          role: user.role,
-          isEmailVerified: user.isEmailVerified,
-        },
-      });
+      return sendTokenResponse(user, 201, res, "Registration successful! Please check your email for the verification code.");
     } catch (error) {
       console.error("Email sending failed:", error);
-      res.status(201).json({
-        success: true,
-        message: "Registration successful, but verification email could not be sent. Please contact support.",
-        token,
-        user: {
-          id: user._id,
-          fullName: user.fullName,
-          email: user.email,
-          role: user.role,
-          isEmailVerified: user.isEmailVerified,
-        },
-      });
+      return sendTokenResponse(user, 201, res, "Registration successful, but verification email could not be sent. Please contact support.");
     }
   } catch (error) {
     console.error("Registration error:", error);
@@ -489,4 +467,18 @@ exports.getMe = async (req, res) => {
       message: "Server error while fetching user data",
     });
   }
+};
+
+module.exports = {
+  register,
+  verifyEmail,
+  resendVerification,
+  login,
+  logout,
+  forgotPassword,
+  verifyResetCode,
+  resetPassword,
+  googleCallback,
+  getMe,
+  updatePassword
 };
