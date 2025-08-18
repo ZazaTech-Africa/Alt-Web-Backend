@@ -133,6 +133,7 @@ exports.verifyEmail = async (req, res) => {
       });
     }
 
+    // Only require the verification code, user ID comes from the token
     const { verificationCode } = req.body;
     const userId = req.user.id;
 
@@ -141,6 +142,7 @@ exports.verifyEmail = async (req, res) => {
       .update(verificationCode)
       .digest("hex");
 
+    // Find the user by ID and verification code
     const user = await User.findOne({
       _id: userId,
       emailVerificationCode: hashedCode,
@@ -165,6 +167,51 @@ exports.verifyEmail = async (req, res) => {
     res.status(500).json({
       success: false,
       message: "Server error during email verification",
+    });
+  }
+};
+
+exports.login = async (req, res) => {
+  try {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({
+        success: false,
+        message: "Validation failed",
+        errors: errors.array(),
+      });
+    }
+
+    const { email, password } = req.body;
+
+    // Check if user exists
+    const user = await User.findOne({ email }).select("+password");
+    if (!user) {
+      return res.status(401).json({
+        success: false,
+        message: "Invalid credentials",
+      });
+    }
+
+    // Check if password matches
+    const isMatch = await user.comparePassword(password);
+    if (!isMatch) {
+      return res.status(401).json({
+        success: false,
+        message: "Invalid credentials",
+      });
+    }
+
+    // Update last login timestamp
+    user.lastLogin = new Date();
+    await user.save({ validateBeforeSave: false });
+
+    sendTokenResponse(user, 200, res, "Logged in successfully!");
+  } catch (error) {
+    console.error("Login error:", error);
+    res.status(500).json({
+      success: false,
+      message: "Server error during login",
     });
   }
 };
