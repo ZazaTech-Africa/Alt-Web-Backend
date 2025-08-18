@@ -468,17 +468,3 @@ exports.getMe = async (req, res) => {
     });
   }
 };
-
-module.exports = {
-  register,
-  verifyEmail,
-  resendVerification,
-  login,
-  logout,
-  forgotPassword,
-  verifyResetCode,
-  resetPassword,
-  googleCallback,
-  getMe,
-  updatePassword
-};
