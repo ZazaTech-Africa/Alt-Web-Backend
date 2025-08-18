@@ -76,6 +76,8 @@ exports.register = async (req, res) => {
       isEmailVerified: process.env.SKIP_EMAIL_VERIFICATION === 'true',
     });
 
+    const token = generateToken(user._id);
+
     if (process.env.SKIP_EMAIL_VERIFICATION === 'true') {
       return sendTokenResponse(user, 201, res, "Registration successful! (Development mode - email verification skipped)");
     }
@@ -108,6 +110,7 @@ exports.register = async (req, res) => {
       res.status(201).json({
         success: true,
         message: "Registration successful! Please check your email for the verification code.",
+        token,
         user: {
           id: user._id,
           fullName: user.fullName,
@@ -121,6 +124,7 @@ exports.register = async (req, res) => {
       res.status(201).json({
         success: true,
         message: "Registration successful, but verification email could not be sent. Please contact support.",
+        token,
         user: {
           id: user._id,
           fullName: user.fullName,
@@ -139,55 +143,6 @@ exports.register = async (req, res) => {
   }
 };
 
-exports.login = async (req, res) => {
-  try {
-    const { email, password } = req.body;
-
-    const user = await User.findOne({ email }).select("+password");
-
-    if (!user) {
-      return res.status(401).json({
-        success: false,
-        message: "Invalid email or password",
-      });
-    }
-
-    const isMatch = await user.comparePassword(password);
-
-    if (!isMatch) {
-      return res.status(401).json({
-        success: false,
-        message: "Invalid email or password",
-      });
-    }
-
-    if (!user.isActive) {
-      return res.status(401).json({
-        success: false,
-        message: "Your account has been deactivated. Please contact support.",
-      });
-    }
-
-    if (!user.isEmailVerified && process.env.SKIP_EMAIL_VERIFICATION !== 'true') {
-      return res.status(401).json({
-        success: false,
-        message: "Please verify your email address before logging in.",
-        requiresEmailVerification: true,
-      });
-    }
-
-    await user.updateLastLogin();
-
-    sendTokenResponse(user, 200, res, "Login successful! Welcome back to SHARPERLY!");
-  } catch (error) {
-    console.error("Login error:", error);
-    res.status(500).json({
-      success: false,
-      message: "Server error during login",
-    });
-  }
-};
-
 exports.verifyEmail = async (req, res) => {
   try {
     const errors = validationResult(req);
@@ -200,6 +155,7 @@ exports.verifyEmail = async (req, res) => {
     }
 
     const { verificationCode } = req.body;
+    const userId = req.user.id;
 
     const hashedCode = crypto
       .createHash("sha256")
@@ -207,6 +163,7 @@ exports.verifyEmail = async (req, res) => {
       .digest("hex");
 
     const user = await User.findOne({
+      _id: userId,
       emailVerificationCode: hashedCode,
       emailVerificationExpire: { $gt: Date.now() },
     });
@@ -233,9 +190,19 @@ exports.verifyEmail = async (req, res) => {
   }
 };
 
+
 exports.resendVerification = async (req, res) => {
   try {
-    const user = req.user;
+    const { email } = req.body;
+
+    const user = await User.findOne({ email });
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: "User not found with this email.",
+      });
+    }
 
     if (user.isEmailVerified) {
       return res.status(400).json({
@@ -329,7 +296,6 @@ exports.forgotPassword = async (req, res) => {
       res.status(200).json({
         success: true,
         message: "Password reset code sent to your email.",
-        email: user.email
       });
     } catch (error) {
       console.error("Password reset email failed:", error);
@@ -361,14 +327,15 @@ exports.verifyResetCode = async (req, res) => {
       });
     }
 
-    const { verificationCode } = req.body;
+    const { email, code } = req.body;
 
     const hashedCode = crypto
       .createHash("sha256")
-      .update(verificationCode)
+      .update(code)
       .digest("hex");
 
     const user = await User.findOne({
+      email,
       passwordResetCode: hashedCode,
       passwordResetExpire: { $gt: Date.now() },
     });
@@ -404,14 +371,15 @@ exports.resetPassword = async (req, res) => {
       });
     }
 
-    const { verificationCode, password, confirmPassword } = req.body;
+    const { email, code, password, confirmPassword } = req.body;
 
     const hashedCode = crypto
       .createHash("sha256")
-      .update(verificationCode)
+      .update(code)
       .digest("hex");
 
     const user = await User.findOne({
+      email,
       passwordResetCode: hashedCode,
       passwordResetExpire: { $gt: Date.now() },
     });
