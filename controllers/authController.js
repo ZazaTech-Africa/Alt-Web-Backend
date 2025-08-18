@@ -107,7 +107,6 @@ exports.register = async (req, res) => {
         html: message,
       });
 
-      // Return token response immediately after registration
       return sendTokenResponse(user, 201, res, "Registration successful! Please check your email for the verification code.");
     } catch (error) {
       console.error("Email sending failed:", error);
@@ -133,7 +132,6 @@ exports.verifyEmail = async (req, res) => {
       });
     }
 
-    // Only require the verification code, user ID comes from the token
     const { verificationCode } = req.body;
     const userId = req.user.id;
 
@@ -142,7 +140,6 @@ exports.verifyEmail = async (req, res) => {
       .update(verificationCode)
       .digest("hex");
 
-    // Find the user by ID and verification code
     const user = await User.findOne({
       _id: userId,
       emailVerificationCode: hashedCode,
@@ -184,7 +181,6 @@ exports.login = async (req, res) => {
 
     const { email, password } = req.body;
 
-    // Check if user exists
     const user = await User.findOne({ email }).select("+password");
     if (!user) {
       return res.status(401).json({
@@ -193,7 +189,6 @@ exports.login = async (req, res) => {
       });
     }
 
-    // Check if password matches
     const isMatch = await user.comparePassword(password);
     if (!isMatch) {
       return res.status(401).json({
@@ -202,7 +197,6 @@ exports.login = async (req, res) => {
       });
     }
 
-    // Update last login timestamp
     user.lastLogin = new Date();
     await user.save({ validateBeforeSave: false });
 
