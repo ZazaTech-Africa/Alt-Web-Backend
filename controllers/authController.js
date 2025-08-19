@@ -81,6 +81,12 @@ exports.register = async (req, res) => {
     if (process.env.SKIP_EMAIL_VERIFICATION === 'true') {
       return sendTokenResponse(user, 201, res, "Registration successful! (Development mode - email verification skipped)");
     }
+    
+    // Store user email in session for verification
+    if (!req.session) {
+      req.session = {};
+    }
+    req.session.pendingVerificationEmail = email;
 
     const verificationCode = user.generateEmailVerificationCode();
     await user.save({ validateBeforeSave: false });
@@ -133,15 +139,17 @@ exports.verifyEmail = async (req, res) => {
     }
 
     const { verificationCode } = req.body;
-    const userId = req.user.id;
+    
+    // Get email from session if available
+    const email = req.session && req.session.pendingVerificationEmail;
 
     const hashedCode = crypto
       .createHash("sha256")
       .update(verificationCode)
       .digest("hex");
 
+    // Find user by verification code only
     const user = await User.findOne({
-      _id: userId,
       emailVerificationCode: hashedCode,
       emailVerificationExpire: { $gt: Date.now() },
     });
@@ -157,6 +165,11 @@ exports.verifyEmail = async (req, res) => {
     user.emailVerificationCode = undefined;
     user.emailVerificationExpire = undefined;
     await user.save({ validateBeforeSave: false });
+    
+    // Clear the pending verification email from session
+    if (req.session) {
+      req.session.pendingVerificationEmail = undefined;
+    }
 
     sendTokenResponse(user, 200, res, "Email verified successfully! Welcome to SHARPERLY!");
   } catch (error) {

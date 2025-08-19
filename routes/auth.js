@@ -71,7 +71,7 @@ const verifyEmailValidation = [
 ];
 
 router.post("/register", registerValidation, authController.register);
-router.post("/verify-email", auth, verifyEmailValidation, authController.verifyEmail);
+router.post("/verify-email", verifyEmailValidation, authController.verifyEmail);
 router.post("/resend-verification", auth, authController.resendVerification);
 
 router.post("/login", loginValidation, authController.login);

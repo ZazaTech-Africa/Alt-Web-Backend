@@ -16,8 +16,9 @@ This guide provides instructions for frontend developers to integrate with the A
 
 2. **Email Verification**:
    - After registration, prompt the user to enter the verification code
-   - Send a POST request to `/api/auth/verify-email` with the verification code
-   - Include the JWT token in the Authorization header
+   - Send a POST request to `/api/auth/verify-email` with just the verification code
+   - No authentication token or email is required for this endpoint
+   - The backend uses session data to associate the code with the correct user
    - Update the UI to reflect the verified status
 
 3. **Login Process**:
@@ -78,13 +79,10 @@ async function registerUser(name, email, password, confirmPassword) {
 ```javascript
 async function verifyEmail(verificationCode) {
   try {
-    const token = localStorage.getItem('token');
-    
     const response = await fetch('https://alt-web-backend-g6do.onrender.com/api/auth/verify-email', {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`
+        'Content-Type': 'application/json'
       },
       body: JSON.stringify({ verificationCode })
     });
