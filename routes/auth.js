@@ -50,10 +50,6 @@ const verifyResetCodeValidation = [
 ];
 
 const resetPasswordValidation = [
-  body("code")
-    .isLength({ min: 6, max: 6 })
-    .isNumeric()
-    .withMessage("Please enter a valid 6-digit code"),
   body("password")
     .isLength({ min: 6 })
     .withMessage("Password must be at least 6 characters long")

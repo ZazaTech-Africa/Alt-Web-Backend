@@ -364,6 +364,12 @@ exports.verifyResetCode = async (req, res) => {
       });
     }
 
+    if (!req.session) {
+      req.session = {};
+    }
+    req.session.verifiedResetCode = hashedCode;
+    req.session.resetUserId = user._id.toString();
+
     res.status(200).json({
       success: true,
       message: "Reset code verified successfully. You can now reset your password.",
@@ -388,22 +394,25 @@ exports.resetPassword = async (req, res) => {
       });
     }
 
-    const { code, password, confirmPassword } = req.body;
+    const { password, confirmPassword } = req.body;
 
-    const hashedCode = crypto
-      .createHash("sha256")
-      .update(code)
-      .digest("hex");
+    if (!req.session || !req.session.verifiedResetCode || !req.session.resetUserId) {
+      return res.status(400).json({
+        success: false,
+        message: "Please verify your reset code first.",
+      });
+    }
 
     const user = await User.findOne({
-      passwordResetCode: hashedCode,
+      _id: req.session.resetUserId,
+      passwordResetCode: req.session.verifiedResetCode,
       passwordResetExpire: { $gt: Date.now() },
     });
 
     if (!user) {
       return res.status(400).json({
         success: false,
-        message: "Invalid or expired reset code.",
+        message: "Invalid or expired reset session.",
       });
     }
 
@@ -418,6 +427,9 @@ exports.resetPassword = async (req, res) => {
     user.passwordResetCode = undefined;
     user.passwordResetExpire = undefined;
     await user.save();
+
+    req.session.verifiedResetCode = undefined;
+    req.session.resetUserId = undefined;
 
     sendTokenResponse(user, 200, res, "Password reset successfully! You are now logged in.");
   }

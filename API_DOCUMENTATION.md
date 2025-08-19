@@ -225,13 +225,13 @@ None
 
 - **URL**: `/api/auth/reset-password`
 - **Method**: `POST`
-- **Description**: Reset password using verified reset code
+- **Description**: Reset password after verifying reset code
 - **Authentication**: None
+- **Note**: User must have verified their reset code first using the `/api/auth/verify-reset-code` endpoint
 
 **Request Body:**
 ```json
 {
-  "code": "123456",
   "password": "newPassword123",
   "confirmPassword": "newPassword123"
 }

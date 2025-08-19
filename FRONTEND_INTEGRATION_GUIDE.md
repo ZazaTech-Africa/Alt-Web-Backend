@@ -239,19 +239,19 @@ async function verifyResetCode(code) {
 ```
 
 3. **Reset Password**:
-   - User enters new password and confirmation
-   - Send a POST request to `/api/auth/reset-password` with code and passwords
+   - User enters new password and confirmation (no need to re-enter the verification code)
+   - Send a POST request to `/api/auth/reset-password` with only passwords
    - Redirect to login page on success
 
 ```javascript
-async function resetPassword(code, password, confirmPassword) {
+async function resetPassword(password, confirmPassword) {
   try {
     const response = await fetch('https://alt-web-backend-g6do.onrender.com/api/auth/reset-password', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
       },
-      body: JSON.stringify({ code, password, confirmPassword })
+      body: JSON.stringify({ password, confirmPassword })
     });
     
     const data = await response.json();
