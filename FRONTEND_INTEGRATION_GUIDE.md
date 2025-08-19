@@ -195,15 +195,72 @@ function handleApiError(error) {
    - Send a POST request to `/api/auth/forgot-password`
    - Display a message to check email for reset code
 
+```javascript
+async function forgotPassword(email) {
+  try {
+    const response = await fetch('https://alt-web-backend-g6do.onrender.com/api/auth/forgot-password', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ email })
+    });
+    
+    const data = await response.json();
+    return data;
+  } catch (error) {
+    return { success: false, error: 'Network error' };
+  }
+}
+```
+
 2. **Verify Reset Code**:
    - User enters the reset code from email
-   - Send a POST request to `/api/auth/verify-reset-code`
+   - Send a POST request to `/api/auth/verify-reset-code` with only the code
    - If successful, proceed to password reset form
 
+```javascript
+async function verifyResetCode(code) {
+  try {
+    const response = await fetch('https://alt-web-backend-g6do.onrender.com/api/auth/verify-reset-code', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ code })
+    });
+    
+    const data = await response.json();
+    return data;
+  } catch (error) {
+    return { success: false, error: 'Network error' };
+  }
+}
+```
+
 3. **Reset Password**:
-   - User enters new password
-   - Send a POST request to `/api/auth/reset-password`
+   - User enters new password and confirmation
+   - Send a POST request to `/api/auth/reset-password` with code and passwords
    - Redirect to login page on success
+
+```javascript
+async function resetPassword(code, password, confirmPassword) {
+  try {
+    const response = await fetch('https://alt-web-backend-g6do.onrender.com/api/auth/reset-password', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ code, password, confirmPassword })
+    });
+    
+    const data = await response.json();
+    return data;
+  } catch (error) {
+    return { success: false, error: 'Network error' };
+  }
+}
+```
 
 ## Best Practices
 

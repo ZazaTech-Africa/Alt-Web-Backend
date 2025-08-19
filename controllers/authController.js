@@ -345,7 +345,7 @@ exports.verifyResetCode = async (req, res) => {
       });
     }
 
-    const { email, code } = req.body;
+    const { code } = req.body;
 
     const hashedCode = crypto
       .createHash("sha256")
@@ -353,7 +353,6 @@ exports.verifyResetCode = async (req, res) => {
       .digest("hex");
 
     const user = await User.findOne({
-      email,
       passwordResetCode: hashedCode,
       passwordResetExpire: { $gt: Date.now() },
     });
@@ -389,7 +388,7 @@ exports.resetPassword = async (req, res) => {
       });
     }
 
-    const { email, code, password, confirmPassword } = req.body;
+    const { code, password, confirmPassword } = req.body;
 
     const hashedCode = crypto
       .createHash("sha256")
@@ -397,7 +396,6 @@ exports.resetPassword = async (req, res) => {
       .digest("hex");
 
     const user = await User.findOne({
-      email,
       passwordResetCode: hashedCode,
       passwordResetExpire: { $gt: Date.now() },
     });

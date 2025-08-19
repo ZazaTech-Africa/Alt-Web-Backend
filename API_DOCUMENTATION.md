@@ -14,7 +14,7 @@ Base URL: `https://alt-web-backend-g6do.onrender.com`
 **Request Body:**
 ```json
 {
-  "name": "John Doe",
+  "fullName": "John Doe",
   "email": "john.doe@example.com",
   "password": "password123",
   "confirmPassword": "password123"
@@ -201,8 +201,7 @@ None
 **Request Body:**
 ```json
 {
-  "email": "john.doe@example.com",
-  "resetCode": "123456"
+  "code": "123456"
 }
 ```
 
@@ -232,9 +231,9 @@ None
 **Request Body:**
 ```json
 {
-  "email": "john.doe@example.com",
-  "resetCode": "123456",
-  "newPassword": "newPassword123"
+  "code": "123456",
+  "password": "newPassword123",
+  "confirmPassword": "newPassword123"
 }
 ```
 

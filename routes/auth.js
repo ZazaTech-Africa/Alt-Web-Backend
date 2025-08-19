@@ -43,14 +43,14 @@ const forgotPasswordValidation = [
 ];
 
 const verifyResetCodeValidation = [
-  body("verificationCode")
+  body("code")
     .isLength({ min: 6, max: 6 })
     .isNumeric()
     .withMessage("Please enter a valid 6-digit code"),
 ];
 
 const resetPasswordValidation = [
-  body("verificationCode")
+  body("code")
     .isLength({ min: 6, max: 6 })
     .isNumeric()
     .withMessage("Please enter a valid 6-digit code"),
