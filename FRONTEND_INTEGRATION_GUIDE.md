@@ -4,6 +4,63 @@
 
 This guide provides instructions for frontend developers to integrate with the Alt-Web Backend API. The backend is deployed at `https://alt-web-backend-g6do.onrender.com`.
 
+## CORS Configuration
+
+The backend has CORS enabled for the following origins:
+- http://localhost:3000
+- http://localhost:5173
+- https://alt-web-phi.vercel.app
+- https://alt-web-frontend.vercel.app
+
+If you're experiencing CORS issues:
+1. Ensure your frontend is running on one of the allowed origins
+2. Check that your requests include the proper headers
+3. Test the CORS configuration using the `/api/cors-test` endpoint
+4. For development, use the same origin or a proxy server
+5. Use the included `cors-test.html` tool to diagnose CORS issues
+
+### CORS Testing Tool
+
+We've included a simple HTML tool to test CORS functionality. To use it:
+
+1. Open the `cors-test.html` file in your browser
+2. The tool will attempt to make requests to various API endpoints
+3. Check the results to see if CORS is properly configured
+4. If you see errors, check the browser console for more details
+
+### Using Proxy in Development
+
+To avoid CORS issues during development, you can set up a proxy in your React application:
+
+#### For Vite (React)
+
+Add the following to your `vite.config.js` file:
+
+```javascript
+export default defineConfig({
+  // ... other config
+  server: {
+    proxy: {
+      '/api': {
+        target: 'https://alt-web-backend-g6do.onrender.com',
+        changeOrigin: true,
+        secure: false,
+      },
+    },
+  },
+});
+```
+
+Then in your frontend code, use relative URLs:
+
+```javascript
+// Instead of this:
+// fetch('https://alt-web-backend-g6do.onrender.com/api/auth/login', ...)
+
+// Do this:
+fetch('/api/auth/login', ...)
+```
+
 ## Authentication Flow
 
 ### User Registration and Login
@@ -40,6 +97,81 @@ This guide provides instructions for frontend developers to integrate with the A
 3. **Handling Token Expiration**:
    - Implement a mechanism to detect 401 Unauthorized responses
    - Redirect to the login page when the token expires
+
+## Error Handling
+
+### Handling CORS Errors
+
+If you encounter CORS errors in your frontend application, implement proper error handling:
+
+#### Using Fetch API
+
+```javascript
+async function makeApiRequest(url, options) {
+  try {
+    const response = await fetch(url, options);
+    return await response.json();
+  } catch (error) {
+    if (error.message === 'Network Error' || error.name === 'TypeError') {
+      console.error('CORS or network error:', error);
+      // Show user-friendly message
+      return {
+        success: false,
+        message: 'Unable to connect to the server. Please check your internet connection or try again later.'
+      };
+    }
+    throw error;
+  }
+}
+```
+
+#### Using Axios
+
+```javascript
+import axios from 'axios';
+
+// Create an axios instance with default configuration
+const api = axios.create({
+  baseURL: '/api', // Use relative URL with proxy or full URL in production
+  timeout: 10000,
+  withCredentials: true, // Important for CORS with credentials
+  headers: {
+    'Content-Type': 'application/json',
+  }
+});
+
+// Add request interceptor to include auth token
+api.interceptors.request.use(
+  (config) => {
+    const token = localStorage.getItem('token');
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+    return config;
+  },
+  (error) => Promise.reject(error)
+);
+
+// Add response interceptor to handle errors
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.message === 'Network Error') {
+      console.error('CORS or network error:', error);
+      // Show user-friendly message
+      return Promise.resolve({
+        data: {
+          success: false,
+          message: 'Unable to connect to the server. Please check your internet connection or try again later.'
+        }
+      });
+    }
+    return Promise.reject(error);
+  }
+);
+
+export default api;
+```
 
 ## API Integration Examples
 

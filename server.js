@@ -7,6 +7,7 @@ const rateLimit = require('express-rate-limit');
 const cookieParser = require('cookie-parser');
 const fileUpload = require('express-fileupload');
 const passport = require('passport');
+const session = require('express-session');
 require('dotenv').config();
 
 const authRoutes = require('./routes/auth');
@@ -18,6 +19,7 @@ const driverRoutes = require('./routes/drivers');
 const shipmentRoutes = require('./routes/shipments');
 
 const errorHandler = require('./middleware/errorHandler');
+const corsErrorHandler = require('./middleware/cors');
 
 require('./config/passport');
 
@@ -42,6 +44,7 @@ const allowedOrigins = [
   "http://localhost:3000",
   "http://localhost:5173",
   "https://alt-web-phi.vercel.app",
+  "https://alt-web-frontend.vercel.app",
   process.env.FRONTEND_URL
 ].filter(Boolean);
 
@@ -50,19 +53,40 @@ app.use(cors({
     if (!origin || allowedOrigins.includes(origin)) {
       callback(null, true);
     } else {
+      console.log(`Blocked by CORS: ${origin}`);
       callback(new Error("Not allowed by CORS"));
     }
   },
   methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
-  allowedHeaders: ["Content-Type", "Authorization"],
+  allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With"],
+  exposedHeaders: ["Content-Length", "X-Content-Type-Options"],
   credentials: true,
+  preflightContinue: false,
+  optionsSuccessStatus: 204
 }));
 
 app.options("*", cors());
 
+// Store allowed origins in app settings for error handler to access
+app.set('allowedOrigins', allowedOrigins);
+
+// Use CORS error handler
+app.use(corsErrorHandler);
+
 app.use(express.json({ limit: "10mb" }));
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
+
+// Session configuration
+app.use(session({
+  secret: process.env.SESSION_SECRET || 'sharperly-session-secret',
+  resave: false,
+  saveUninitialized: true,
+  cookie: { 
+    secure: process.env.NODE_ENV === 'production',
+    maxAge: 24 * 60 * 60 * 1000 // 24 hours
+  }
+}));
 
 app.use(fileUpload({
   useTempFiles: true,
@@ -107,7 +131,21 @@ app.get("/api/health", (req, res) => {
     message: "SHARPERLY Logistics API is running!",
     timestamp: new Date().toISOString(),
     environment: process.env.NODE_ENV,
-    version: "1.0.0"
+    version: "1.0.0",
+    cors: {
+      origin: req.headers.origin || 'No origin header',
+      allowed: allowedOrigins.includes(req.headers.origin) || !req.headers.origin
+    }
+  });
+});
+
+app.get("/api/cors-test", (req, res) => {
+  res.status(200).json({
+    success: true,
+    message: "CORS is working correctly!",
+    requestOrigin: req.headers.origin || 'No origin header',
+    allowedOrigins: allowedOrigins,
+    isAllowed: allowedOrigins.includes(req.headers.origin) || !req.headers.origin
   });
 });
 
