@@ -7,7 +7,6 @@ const rateLimit = require('express-rate-limit');
 const cookieParser = require('cookie-parser');
 const fileUpload = require('express-fileupload');
 const passport = require('passport');
-const session = require('express-session');
 require('dotenv').config();
 
 const authRoutes = require('./routes/auth');
