@@ -7,7 +7,6 @@ const rateLimit = require('express-rate-limit');
 const cookieParser = require('cookie-parser');
 const fileUpload = require('express-fileupload');
 const passport = require('passport');
-const session = require('express-session');
 require('dotenv').config();
 
 const authRoutes = require('./routes/auth');
@@ -76,17 +75,6 @@ app.use(corsErrorHandler);
 app.use(express.json({ limit: "10mb" }));
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
-
-// Session configuration
-app.use(session({
-  secret: process.env.SESSION_SECRET || 'sharperly-session-secret',
-  resave: false,
-  saveUninitialized: true,
-  cookie: { 
-    secure: process.env.NODE_ENV === 'production',
-    maxAge: 24 * 60 * 60 * 1000 // 24 hours
-  }
-}));
 
 app.use(fileUpload({
   useTempFiles: true,
