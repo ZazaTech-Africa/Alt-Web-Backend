@@ -209,7 +209,8 @@ None
 ```json
 {
   "success": true,
-  "message": "Reset code verified successfully"
+  "message": "Reset code verified successfully",
+  "resetToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
 }
 ```
 
@@ -225,15 +226,16 @@ None
 
 - **URL**: `/api/auth/reset-password`
 - **Method**: `POST`
-- **Description**: Reset password after verifying reset code
+- **Description**: Reset password using the reset token
 - **Authentication**: None
-- **Note**: User must have verified their reset code first using the `/api/auth/verify-reset-code` endpoint
+- **Note**: User must have verified their reset code first using the `/api/auth/verify-reset-code` endpoint to obtain the resetToken
 
 **Request Body:**
 ```json
 {
   "password": "newPassword123",
-  "confirmPassword": "newPassword123"
+  "confirmPassword": "newPassword123",
+  "resetToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
 }
 ```
 

@@ -377,15 +377,20 @@ exports.verifyResetCode = async (req, res) => {
       });
     }
 
-    if (!req.session) {
-      req.session = {};
-    }
-    req.session.verifiedResetCode = hashedCode;
-    req.session.resetUserId = user._id.toString();
+    // Generate a special reset token with short expiry
+    const resetToken = jwt.sign(
+      { 
+        resetUserId: user._id.toString(),
+        verifiedResetCode: hashedCode 
+      }, 
+      process.env.JWT_SECRET, 
+      { expiresIn: '15m' }
+    );
 
     res.status(200).json({
       success: true,
       message: "Reset code verified successfully. You can now reset your password.",
+      resetToken
     });
   } catch (error) {
     console.error("Verify reset code error:", error);
@@ -407,18 +412,29 @@ exports.resetPassword = async (req, res) => {
       });
     }
 
-    const { password, confirmPassword } = req.body;
+    const { password, confirmPassword, resetToken } = req.body;
 
-    if (!req.session || !req.session.verifiedResetCode || !req.session.resetUserId) {
+    if (!resetToken) {
       return res.status(400).json({
         success: false,
-        message: "Please verify your reset code first.",
+        message: "Reset token is required.",
+      });
+    }
+
+    // Verify the reset token
+    let decoded;
+    try {
+      decoded = jwt.verify(resetToken, process.env.JWT_SECRET);
+    } catch (error) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid or expired reset token.",
       });
     }
 
     const user = await User.findOne({
-      _id: req.session.resetUserId,
-      passwordResetCode: req.session.verifiedResetCode,
+      _id: decoded.resetUserId,
+      passwordResetCode: decoded.verifiedResetCode,
       passwordResetExpire: { $gt: Date.now() },
     });
 
@@ -440,9 +456,6 @@ exports.resetPassword = async (req, res) => {
     user.passwordResetCode = undefined;
     user.passwordResetExpire = undefined;
     await user.save();
-
-    req.session.verifiedResetCode = undefined;
-    req.session.resetUserId = undefined;
 
     sendTokenResponse(user, 200, res, "Password reset successfully! You are now logged in.");
   }

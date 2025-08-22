@@ -347,7 +347,7 @@ async function forgotPassword(email) {
 2. **Verify Reset Code**:
    - User enters the reset code from email
    - Send a POST request to `/api/auth/verify-reset-code` with only the code
-   - If successful, proceed to password reset form
+   - If successful, store the returned resetToken for the next step
 
 ```javascript
 async function verifyResetCode(code) {
@@ -361,6 +361,12 @@ async function verifyResetCode(code) {
     });
     
     const data = await response.json();
+    
+    if (data.success && data.resetToken) {
+      // Store the reset token for the password reset step
+      localStorage.setItem('passwordResetToken', data.resetToken);
+    }
+    
     return data;
   } catch (error) {
     return { success: false, error: 'Network error' };
@@ -369,24 +375,37 @@ async function verifyResetCode(code) {
 ```
 
 3. **Reset Password**:
-   - User enters new password and confirmation (no need to re-enter the verification code)
-   - Send a POST request to `/api/auth/reset-password` with only passwords
+   - User enters new password and confirmation
+   - Send a POST request to `/api/auth/reset-password` with passwords and the resetToken (automatically retrieved from localStorage)
    - Redirect to login page on success
 
 ```javascript
 async function resetPassword(password, confirmPassword) {
   try {
+    // Get the reset token stored from the previous step
+    const resetToken = localStorage.getItem('passwordResetToken');
+    
+    if (!resetToken) {
+      return { success: false, error: 'Reset token not found. Please verify your code again.' };
+    }
+    
     const response = await fetch('https://alt-web-backend-g6do.onrender.com/api/auth/reset-password', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
       },
-      body: JSON.stringify({ password, confirmPassword })
+      body: JSON.stringify({ password, confirmPassword, resetToken })
     });
     
     const data = await response.json();
+    
+    // Clear the reset token after use, regardless of success or failure
+    localStorage.removeItem('passwordResetToken');
+    
     return data;
   } catch (error) {
+    // Clear the reset token on error
+    localStorage.removeItem('passwordResetToken');
     return { success: false, error: 'Network error' };
   }
 }

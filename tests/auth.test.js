@@ -9,6 +9,109 @@ beforeAll(async () => {
     useNewUrlParser: true,
     useUnifiedTopology: true,
   });
+
+  describe('Password Reset Flow', () => {
+    let user;
+    let resetCode;
+
+    beforeEach(async () => {
+      user = await User.create({
+        fullName: 'Reset User',
+        email: 'reset@example.com',
+        password: 'Password123',
+        isEmailVerified: true
+      });
+      resetCode = user.generatePasswordResetCode();
+      await user.save({ validateBeforeSave: false });
+    });
+
+    it('should verify reset code and return a reset token', async () => {
+      const res = await request(app)
+        .post('/api/auth/verify-reset-code')
+        .send({
+          code: resetCode
+        });
+
+      expect(res.status).toBe(200);
+      expect(res.body.success).toBe(true);
+      expect(res.body.message).toContain('Reset code verified successfully');
+      expect(res.body.resetToken).toBeDefined();
+    });
+
+    it('should reset password with valid reset token', async () => {
+      // First verify the reset code to get the token
+      const verifyRes = await request(app)
+        .post('/api/auth/verify-reset-code')
+        .send({
+          code: resetCode
+        });
+
+      const resetToken = verifyRes.body.resetToken;
+
+      // Then reset the password using the token
+      const res = await request(app)
+        .post('/api/auth/reset-password')
+        .send({
+          password: 'NewPassword123',
+          confirmPassword: 'NewPassword123',
+          resetToken
+        });
+
+      expect(res.status).toBe(200);
+      expect(res.body.success).toBe(true);
+      expect(res.body.message).toContain('Password reset successfully');
+      expect(res.body.token).toBeDefined();
+
+      // Verify we can login with the new password
+      const loginRes = await request(app)
+        .post('/api/auth/login')
+        .send({
+          email: 'reset@example.com',
+          password: 'NewPassword123'
+        });
+
+      expect(loginRes.status).toBe(200);
+      expect(loginRes.body.success).toBe(true);
+    });
+
+    it('should not reset password with invalid token', async () => {
+      const res = await request(app)
+        .post('/api/auth/reset-password')
+        .send({
+          password: 'NewPassword123',
+          confirmPassword: 'NewPassword123',
+          resetToken: 'invalid-token'
+        });
+
+      expect(res.status).toBe(400);
+      expect(res.body.success).toBe(false);
+      expect(res.body.message).toContain('Invalid or expired reset token');
+    });
+
+    it('should not reset password with mismatched passwords', async () => {
+      // First verify the reset code to get the token
+      const verifyRes = await request(app)
+        .post('/api/auth/verify-reset-code')
+        .send({
+          code: resetCode
+        });
+
+      const resetToken = verifyRes.body.resetToken;
+
+      // Then try to reset with mismatched passwords
+      const res = await request(app)
+        .post('/api/auth/reset-password')
+        .send({
+          password: 'NewPassword123',
+          confirmPassword: 'DifferentPassword123',
+          resetToken
+        });
+
+      expect(res.status).toBe(400);
+      expect(res.body.success).toBe(false);
+      expect(res.body.message).toContain('New passwords do not match');
+    });
+  });
 });
 
 beforeEach(async () => {
