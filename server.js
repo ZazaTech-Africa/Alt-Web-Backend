@@ -18,7 +18,6 @@ const driverRoutes = require('./routes/drivers');
 const shipmentRoutes = require('./routes/shipments');
 
 const errorHandler = require('./middleware/errorHandler');
-const corsErrorHandler = require('./middleware/cors');
 
 require('./config/passport');
 
@@ -48,29 +47,16 @@ const allowedOrigins = [
 ].filter(Boolean);
 
 app.use(cors({
-  origin: function (origin, callback) {
-    if (!origin || allowedOrigins.includes(origin)) {
-      callback(null, true);
-    } else {
-      console.log(`Blocked by CORS: ${origin}`);
-      callback(new Error("Not allowed by CORS"));
-    }
-  },
+  origin: allowedOrigins,
   methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
   allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With"],
   exposedHeaders: ["Content-Length", "X-Content-Type-Options"],
   credentials: true,
-  preflightContinue: false,
-  optionsSuccessStatus: 204
+  optionsSuccessStatus: 200 // Changed to 200 to include response body for debugging
 }));
 
-app.options("*", cors());
-
-// Store allowed origins in app settings for error handler to access
-app.set('allowedOrigins', allowedOrigins);
-
-// Use CORS error handler
-app.use(corsErrorHandler);
+// Explicitly handle OPTIONS requests
+app.options('*', cors());
 
 app.use(express.json({ limit: "10mb" }));
 app.use(express.urlencoded({ extended: true }));
@@ -81,7 +67,6 @@ app.use(fileUpload({
   tempFileDir: '/tmp/',
   limits: { fileSize: process.env.MAX_FILE_SIZE || 5 * 1024 * 1024 },
 }));
-
 
 app.use(passport.initialize());
 
