@@ -50,6 +50,9 @@ const businessSchema = new mongoose.Schema({
     type: String,
     required: [true, "Proof of address is required"],
   },
+  businessLogo: {
+    type: String,
+  },
   businessHotline: {
     type: String,
     required: [true, "Business hotline is required"],

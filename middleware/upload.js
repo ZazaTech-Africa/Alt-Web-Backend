@@ -19,7 +19,7 @@ const fileFilter = (req, file, cb) => {
     } else {
       cb(new Error('Please upload a valid document (PDF, DOC, DOCX) or image file'), false);
     }
-  } else if (file.fieldname === 'profileImage') {
+  } else if (file.fieldname === 'profileImage' || file.fieldname === 'businessLogo') {
     if (file.mimetype.startsWith('image/')) {
       cb(null, true);
     } else {

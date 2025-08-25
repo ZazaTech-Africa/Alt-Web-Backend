@@ -16,8 +16,22 @@ exports.submitKYC = async (req, res) => {
     }
 
     let proofOfAddressUrl = null;
-    if (req.file) {
-      proofOfAddressUrl = `/uploads/${req.file.filename}`; // Local file path
+    let businessLogoUrl = null;
+    
+    if (req.files) {
+      // Handle proof of address file
+      if (req.files.proofOfAddress && req.files.proofOfAddress[0]) {
+        proofOfAddressUrl = `/uploads/${req.files.proofOfAddress[0].filename}`; // Local file path
+      }
+      
+      // Handle business logo file
+      if (req.files.businessLogo && req.files.businessLogo[0]) {
+        const result = await cloudinary.uploader.upload(req.files.businessLogo[0].path, {
+          folder: "sharperly/business-logos",
+          resource_type: "image",
+        });
+        businessLogoUrl = result.secure_url;
+      }
     }
 
     const {
@@ -37,6 +51,7 @@ exports.submitKYC = async (req, res) => {
       businessAddress: JSON.parse(businessAddress),
       cacRegistrationNumber,
       proofOfAddress: proofOfAddressUrl || "pending-upload",
+      businessLogo: businessLogoUrl,
       businessHotline,
       alternativePhoneNumber,
       wantSharperlyDriverOrders: wantSharperlyDriverOrders === 'true',
@@ -105,12 +120,24 @@ exports.updateKYC = async (req, res) => {
 
     const updateData = { ...req.body };
 
-    if (req.file) {
-      const result = await cloudinary.uploader.upload(req.file.path, {
-        folder: "sharperly/proof-of-address",
-        resource_type: "auto",
-      });
-      updateData.proofOfAddress = result.secure_url;
+    if (req.files) {
+      // Handle proof of address file
+      if (req.files.proofOfAddress && req.files.proofOfAddress[0]) {
+        const proofResult = await cloudinary.uploader.upload(req.files.proofOfAddress[0].path, {
+          folder: "sharperly/proof-of-address",
+          resource_type: "auto",
+        });
+        updateData.proofOfAddress = proofResult.secure_url;
+      }
+      
+      // Handle business logo file
+      if (req.files.businessLogo && req.files.businessLogo[0]) {
+        const logoResult = await cloudinary.uploader.upload(req.files.businessLogo[0].path, {
+          folder: "sharperly/business-logos",
+          resource_type: "image",
+        });
+        updateData.businessLogo = logoResult.secure_url;
+      }
     }
 
     if (updateData.businessAddress && typeof updateData.businessAddress === 'string') {
