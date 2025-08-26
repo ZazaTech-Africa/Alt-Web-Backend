@@ -21,7 +21,11 @@ exports.submitKYC = async (req, res) => {
     if (req.files) {
       // Handle proof of address file
       if (req.files.proofOfAddress && req.files.proofOfAddress[0]) {
-        proofOfAddressUrl = `/uploads/${req.files.proofOfAddress[0].filename}`; // Local file path
+        const proofResult = await cloudinary.uploader.upload(req.files.proofOfAddress[0].path, {
+          folder: "sharperly/proof-of-address",
+          resource_type: "auto",
+        });
+        proofOfAddressUrl = proofResult.secure_url;
       }
       
       // Handle business logo file
