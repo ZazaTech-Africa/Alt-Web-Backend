@@ -52,7 +52,7 @@ const vehicleRegistrationValidation = [
     .withMessage("Number of vans must be a non-negative integer"),
 ];
 
-router.post("/kyc", upload.fields([{ name: 'proofOfAddress', maxCount: 1 }, { name: 'businessLogo', maxCount: 1 }]), businessKYCValidation, businessController.submitKYC);
+router.post("/kyc", upload.any(), businessKYCValidation, businessController.submitKYC);
 router.get("/kyc", businessController.getKYC);
 router.put("/kyc", upload.fields([{ name: 'proofOfAddress', maxCount: 1 }, { name: 'businessLogo', maxCount: 1 }]), businessController.updateKYC);
 

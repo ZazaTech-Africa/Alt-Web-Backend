@@ -11,22 +11,16 @@ const storage = multer.diskStorage({
 });
 
 const fileFilter = (req, file, cb) => {
-  if (file.fieldname === 'proofOfAddress') {
-    if (file.mimetype.startsWith('image/') || 
-        file.mimetype === 'application/pdf' ||
-        file.mimetype.includes('document')) {
-      cb(null, true);
-    } else {
-      cb(new Error('Please upload a valid document (PDF, DOC, DOCX) or image file'), false);
-    }
-  } else if (file.fieldname === 'profileImage' || file.fieldname === 'businessLogo') {
-    if (file.mimetype.startsWith('image/')) {
-      cb(null, true);
-    } else {
-      cb(new Error('Please upload a valid image file'), false);
-    }
-  } else {
+  // Accept all files, but log what we received for debugging
+  console.log('Received file:', file.fieldname, file.mimetype);
+  
+  // Still validate by mimetype for security
+  if (file.mimetype.startsWith('image/') || 
+      file.mimetype === 'application/pdf' ||
+      file.mimetype.includes('document')) {
     cb(null, true);
+  } else {
+    cb(new Error('Please upload a valid document (PDF, DOC, DOCX) or image file'), false);
   }
 };
 
