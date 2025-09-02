@@ -52,6 +52,10 @@ const vehicleRegistrationValidation = [
     .withMessage("Number of vans must be a non-negative integer"),
 ];
 
+// Base64 route - for JSON data with base64-encoded images
+router.post("/kyc/base64", businessKYCValidation, businessController.submitKYC);
+
+// Legacy route - for multipart form data (backward compatibility)
 router.post("/kyc", upload.any(), businessKYCValidation, businessController.submitKYC);
 router.get("/kyc", businessController.getKYC);
 router.put("/kyc", upload.fields([{ name: 'proofOfAddress', maxCount: 1 }, { name: 'businessLogo', maxCount: 1 }]), businessController.updateKYC);

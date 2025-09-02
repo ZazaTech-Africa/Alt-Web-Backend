@@ -3,6 +3,7 @@ const Vehicle = require("../models/Vehicle");
 const User = require("../models/User");
 const { validationResult } = require("express-validator");
 const cloudinary = require("../config/cloudinary");
+const fileHandler = require("../utils/fileHandler");
 
 exports.submitKYC = async (req, res) => {
   try {
@@ -18,70 +19,107 @@ exports.submitKYC = async (req, res) => {
     let proofOfAddressUrl = null;
     let businessLogoUrl = null;
     
-    console.log('Files received:', req.files);
-    console.log('File received:', req.file); // Check for single file upload
     console.log('Body received:', req.body);
     
-    // Handle both multiple files (req.files) and single file (req.file) scenarios
-     if (req.files || req.file) {
-       // Handle proof of address file if req.files exists
-       if (req.files && req.files.proofOfAddress && req.files.proofOfAddress[0]) {
-         const proofResult = await cloudinary.uploader.upload(req.files.proofOfAddress[0].path, {
-           folder: "sharperly/proof-of-address",
-           resource_type: "auto",
-         });
-         proofOfAddressUrl = proofResult.secure_url;
-       }
-       
-       // Handle business logo file if req.files exists
-       if (req.files && req.files.businessLogo && req.files.businessLogo[0]) {
-         const result = await cloudinary.uploader.upload(req.files.businessLogo[0].path, {
-           folder: "sharperly/business-logos",
-           resource_type: "image",
-         });
-         businessLogoUrl = result.secure_url;
-       }
-      
-      // Handle generic file upload (for compatibility with different field names)
-      if (req.files) {
-        const fileKeys = Object.keys(req.files);
-        for (const key of fileKeys) {
-          if (key !== 'proofOfAddress' && key !== 'businessLogo' && req.files[key][0]) {
-            const file = req.files[key][0];
-            // Determine if this is likely a proof of address or business logo based on mimetype
-            if (!proofOfAddressUrl && (file.mimetype === 'application/pdf' || file.mimetype.includes('document'))) {
-              const proofResult = await cloudinary.uploader.upload(file.path, {
-                folder: "sharperly/proof-of-address",
-                resource_type: "auto",
-              });
-              proofOfAddressUrl = proofResult.secure_url;
-            } else if (!businessLogoUrl && file.mimetype.startsWith('image/')) {
-              const result = await cloudinary.uploader.upload(file.path, {
-                folder: "sharperly/business-logos",
-                resource_type: "image",
-              });
-              businessLogoUrl = result.secure_url;
-            }
-          }
-        }
+    // Handle base64 encoded files
+    if (req.body.proofOfAddressBase64) {
+      try {
+        proofOfAddressUrl = await fileHandler.processBase64AndUpload(
+          req.body.proofOfAddressBase64,
+          "sharperly/proof-of-address"
+        );
+        console.log('Proof of address uploaded successfully:', proofOfAddressUrl);
+      } catch (error) {
+        console.error('Error uploading proof of address:', error);
+        return res.status(400).json({
+          success: false,
+          message: "Error processing proof of address file",
+        });
       }
+    }
+    
+    if (req.body.businessLogoBase64) {
+      try {
+        businessLogoUrl = await fileHandler.processBase64AndUpload(
+          req.body.businessLogoBase64,
+          "sharperly/business-logos"
+        );
+        console.log('Business logo uploaded successfully:', businessLogoUrl);
+      } catch (error) {
+        console.error('Error uploading business logo:', error);
+        return res.status(400).json({
+          success: false,
+          message: "Error processing business logo file",
+        });
+      }
+    }
+    
+    // For backward compatibility - handle multipart form data if base64 is not used
+    if ((!proofOfAddressUrl || !businessLogoUrl) && (req.files || req.file)) {
+      console.log('Files received:', req.files);
+      console.log('File received:', req.file);
       
-      // Handle single file upload case
-      if (req.file) {
-        const file = req.file;
-        // Determine if this is likely a proof of address or business logo based on mimetype
-        if (!proofOfAddressUrl && (file.mimetype === 'application/pdf' || file.mimetype.includes('document'))) {
-          const proofResult = await cloudinary.uploader.upload(file.path, {
+      // Handle both multiple files (req.files) and single file (req.file) scenarios
+      if (req.files || req.file) {
+        // Handle proof of address file if req.files exists
+        if (!proofOfAddressUrl && req.files && req.files.proofOfAddress && req.files.proofOfAddress[0]) {
+          const proofResult = await cloudinary.uploader.upload(req.files.proofOfAddress[0].path, {
             folder: "sharperly/proof-of-address",
             resource_type: "auto",
           });
           proofOfAddressUrl = proofResult.secure_url;
-        } else if (!businessLogoUrl && file.mimetype.startsWith('image/')) {
-          const result = await cloudinary.uploader.upload(file.path, {
+        }
+        
+        // Handle business logo file if req.files exists
+        if (!businessLogoUrl && req.files && req.files.businessLogo && req.files.businessLogo[0]) {
+          const result = await cloudinary.uploader.upload(req.files.businessLogo[0].path, {
             folder: "sharperly/business-logos",
             resource_type: "image",
           });
           businessLogoUrl = result.secure_url;
+        }
+        
+        // Handle generic file upload (for compatibility with different field names)
+        if (req.files) {
+          const fileKeys = Object.keys(req.files);
+          for (const key of fileKeys) {
+            if (key !== 'proofOfAddress' && key !== 'businessLogo' && req.files[key][0]) {
+              const file = req.files[key][0];
+              // Determine if this is likely a proof of address or business logo based on mimetype
+              if (!proofOfAddressUrl && (file.mimetype === 'application/pdf' || file.mimetype.includes('document'))) {
+                const proofResult = await cloudinary.uploader.upload(file.path, {
+                  folder: "sharperly/proof-of-address",
+                  resource_type: "auto",
+                });
+                proofOfAddressUrl = proofResult.secure_url;
+              } else if (!businessLogoUrl && file.mimetype.startsWith('image/')) {
+                const result = await cloudinary.uploader.upload(file.path, {
+                  folder: "sharperly/business-logos",
+                  resource_type: "image",
+                });
+                businessLogoUrl = result.secure_url;
+              }
+            }
+          }
+        }
+        
+        // Handle single file upload case
+        if (req.file) {
+          const file = req.file;
+          // Determine if this is likely a proof of address or business logo based on mimetype
+          if (!proofOfAddressUrl && (file.mimetype === 'application/pdf' || file.mimetype.includes('document'))) {
+            const proofResult = await cloudinary.uploader.upload(file.path, {
+              folder: "sharperly/proof-of-address",
+              resource_type: "auto",
+            });
+            proofOfAddressUrl = proofResult.secure_url;
+          } else if (!businessLogoUrl && file.mimetype.startsWith('image/')) {
+            const result = await cloudinary.uploader.upload(file.path, {
+              folder: "sharperly/business-logos",
+              resource_type: "image",
+            });
+            businessLogoUrl = result.secure_url;
+          }
         }
       }
     }
