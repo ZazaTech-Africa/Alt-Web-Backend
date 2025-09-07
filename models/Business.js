@@ -20,25 +20,25 @@ const businessSchema = new mongoose.Schema({
     trim: true,
     match: [/^\w+([.-]?\w+)*@\w+([.-]?\w+)*(\.\w{2,3})+$/, "Please enter a valid business email"],
   },
-  businessAddress: {
-    street: {
-      type: String,
-      required: [true, "Street address is required"],
-    },
-    city: {
-      type: String,
-      required: [true, "City is required"],
-    },
-    state: {
-      type: String,
-      required: [true, "State is required"],
-    },
-    country: {
-      type: String,
-      required: [true, "Country is required"],
-      default: "Nigeria",
-    },
-    zipCode: String,
+  businessStreet: {
+    type: String,
+    required: [true, "Street address is required"],
+  },
+  businessCity: {
+    type: String,
+    required: [true, "City is required"],
+  },
+  businessState: {
+    type: String,
+    required: [true, "State is required"],
+  },
+  businessCountry: {
+    type: String,
+    required: [true, "Country is required"],
+    default: "Nigeria",
+  },
+  businessZipCode: {
+    type: String,
   },
   cacRegistrationNumber: {
     type: String,

@@ -17,15 +17,19 @@ const businessKYCValidation = [
     .isEmail()
     .normalizeEmail()
     .withMessage("Please enter a valid business email address"),
-  body("businessAddress.street")
+  body("businessStreet")
     .notEmpty()
     .withMessage("Street address is required"),
-  body("businessAddress.city")
+  body("businessCity")
     .notEmpty()
     .withMessage("City is required"),
-  body("businessAddress.state")
+  body("businessState")
     .notEmpty()
     .withMessage("State is required"),
+  body("businessCountry")
+    .optional()
+    .notEmpty()
+    .withMessage("Country is required"),
   body("cacRegistrationNumber")
     .notEmpty()
     .withMessage("CAC registration number is required"),

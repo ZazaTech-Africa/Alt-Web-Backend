@@ -127,7 +127,11 @@ exports.submitKYC = async (req, res) => {
     const {
       businessName,
       businessEmail,
-      businessAddress,
+      businessStreet,
+      businessCity,
+      businessState,
+      businessCountry,
+      businessZipCode,
       cacRegistrationNumber,
       businessHotline,
       alternativePhoneNumber,
@@ -138,7 +142,11 @@ exports.submitKYC = async (req, res) => {
       user: req.user.id,
       businessName,
       businessEmail,
-      businessAddress: JSON.parse(businessAddress),
+      businessStreet,
+      businessCity,
+      businessState,
+      businessCountry,
+      businessZipCode,
       cacRegistrationNumber,
       proofOfAddress: proofOfAddressUrl || "pending-upload",
       businessLogo: businessLogoUrl,
@@ -230,9 +238,7 @@ exports.updateKYC = async (req, res) => {
       }
     }
 
-    if (updateData.businessAddress && typeof updateData.businessAddress === 'string') {
-      updateData.businessAddress = JSON.parse(updateData.businessAddress);
-    }
+    // No need to parse address fields as they are now individual strings
 
     if (updateData.wantSharperlyDriverOrders) {
       updateData.wantSharperlyDriverOrders = updateData.wantSharperlyDriverOrders === 'true';
