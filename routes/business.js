@@ -32,6 +32,7 @@ const businessKYCValidation = [
     .withMessage("Country is required"),
   body("zipCode")
     .optional()
+    .notEmpty()
     .withMessage("Zip code is optional"),
   body("cacRegistrationNumber")
     .notEmpty()
