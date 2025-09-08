@@ -1,0 +1,81 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "KYC Form Schema",
+  "description": "Schema for the KYC form based on the backend structure",
+  "type": "object",
+  "properties": {
+    "businessName": {
+      "type": "string",
+      "description": "Business name",
+      "minLength": 2,
+      "maxLength": 200
+    },
+    "businessEmail": {
+      "type": "string",
+      "format": "email",
+      "description": "Business email"
+    },
+    "streetAddress": {
+      "type": "string",
+      "description": "Street address"
+    },
+    "city": {
+      "type": "string",
+      "description": "City"
+    },
+    "state": {
+      "type": "string",
+      "description": "State"
+    },
+    "country": {
+      "type": "string",
+      "description": "Country",
+      "default": "Nigeria"
+    },
+    "zipCode": {
+      "type": "string",
+      "description": "Zip Code"
+    },
+    "cacRegistrationNumber": {
+      "type": "string",
+      "description": "CAC Registration number"
+    },
+    "proofOfAddressBase64": {
+      "type": "string",
+      "description": "Proof of address (not more than 2-months old electricity bill) in base64 format",
+      "pattern": "^data:.*;base64,.*"
+    },
+    "businessLogoBase64": {
+      "type": "string",
+      "description": "Business logo in base64 format",
+      "pattern": "^data:.*;base64,.*"
+    },
+    "businessHotline": {
+      "type": "string",
+      "description": "Business hotline",
+      "pattern": "^[\\+]?[1-9][\\d]{0,15}$"
+    },
+    "alternativePhoneNumber": {
+      "type": "string",
+      "description": "Alternative phone number (optional)",
+      "pattern": "^[\\+]?[1-9][\\d]{0,15}$"
+    },
+    "wantSharperlyDriverOrders": {
+      "type": "boolean",
+      "description": "Would you want sharperly to give your drivers orders?",
+      "default": false
+    }
+  },
+  "required": [
+    "businessName",
+    "businessEmail",
+    "streetAddress",
+    "city",
+    "state",
+    "country",
+    "cacRegistrationNumber",
+    "proofOfAddressBase64",
+    "businessHotline",
+    "wantSharperlyDriverOrders"
+  ]
+}

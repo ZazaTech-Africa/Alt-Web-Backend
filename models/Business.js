@@ -39,6 +39,7 @@ const businessSchema = new mongoose.Schema({
   },
   businessZipCode: {
     type: String,
+    required: false,
   },
   cacRegistrationNumber: {
     type: String,

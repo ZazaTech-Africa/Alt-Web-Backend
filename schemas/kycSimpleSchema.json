@@ -1,0 +1,15 @@
+{
+  "businessName": "Business Name Ltd",
+  "businessEmail": "contact@businessname.com",
+  "streetAddress": "123 Business Street",
+  "city": "Lagos",
+  "state": "Lagos State",
+  "country": "Nigeria",
+  "zipCode": "100001",
+  "cacRegistrationNumber": "RC123456789",
+  "proofOfAddressBase64": "data:application/pdf;base64,/9j/4AAQSkZJRgABAQEAYABgAAD...",
+  "businessLogoBase64": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAB...",
+  "businessHotline": "+2348012345678",
+  "alternativePhoneNumber": "+2348087654321",
+  "wantSharperlyDriverOrders": true
+}

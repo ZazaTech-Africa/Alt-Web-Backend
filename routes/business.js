@@ -17,29 +17,37 @@ const businessKYCValidation = [
     .isEmail()
     .normalizeEmail()
     .withMessage("Please enter a valid business email address"),
-  body("businessStreet")
+  body("streetAddress")
     .notEmpty()
     .withMessage("Street address is required"),
-  body("businessCity")
+  body("city")
     .notEmpty()
     .withMessage("City is required"),
-  body("businessState")
+  body("state")
     .notEmpty()
     .withMessage("State is required"),
-  body("businessCountry")
+  body("country")
     .optional()
     .notEmpty()
     .withMessage("Country is required"),
+  body("zipCode")
+    .optional()
+    .withMessage("Zip code is optional"),
   body("cacRegistrationNumber")
     .notEmpty()
     .withMessage("CAC registration number is required"),
   body("businessHotline")
     .matches(/^[\+]?[1-9][\d]{0,15}$/)
     .withMessage("Please enter a valid business hotline"),
+  body("alternativePhoneNumber")
+    .optional()
+    .matches(/^[\+]?[1-9][\d]{0,15}$/)
+    .withMessage("Please enter a valid alternative phone number"),
   body("wantSharperlyDriverOrders")
     .isBoolean()
     .withMessage("Please specify if you want Sharperly driver orders"),
 ];
+
 
 const vehicleRegistrationValidation = [
   body("numberOfDrivers")
