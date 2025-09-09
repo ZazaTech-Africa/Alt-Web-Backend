@@ -1,0 +1,275 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Dashboard API Schemas",
+  "description": "JSON schemas for the Dashboard API endpoints",
+  
+  "definitions": {
+    "pagination": {
+      "type": "object",
+      "properties": {
+        "currentPage": { "type": "integer", "minimum": 1 },
+        "totalPages": { "type": "integer", "minimum": 0 },
+        "totalItems": { "type": "integer", "minimum": 0 },
+        "hasNext": { "type": "boolean" },
+        "hasPrev": { "type": "boolean" }
+      },
+      "required": ["currentPage", "totalPages", "hasNext", "hasPrev"]
+    },
+    
+    "dispatchStats": {
+      "type": "object",
+      "properties": {
+        "count": { "type": "integer", "minimum": 0 },
+        "percentChange": { "type": "number" }
+      },
+      "required": ["count", "percentChange"]
+    },
+    
+    "shipment": {
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "status": { "type": "string", "enum": ["Picked", "Not Picked"] },
+        "productName": { "type": "string" },
+        "min": { "type": "string" },
+        "pickUp": { "type": "string" },
+        "dropOff": { "type": "string" },
+        "customerName": { "type": "string" },
+        "deliveryPrice": { "type": "string" },
+        "profileName": { "type": "string" },
+        "dispatcherName": { "type": "string" },
+        "driverName": { "type": "string" },
+        "driverImage": { "type": ["string", "null"] },
+        "driverRating": { "type": "number", "minimum": 0, "maximum": 5 },
+        "itemsNo": { "type": "integer", "minimum": 0 },
+        "orderDate": { "type": "string", "format": "date-time" },
+        "dispatchDate": { "type": ["string", "null"], "format": "date-time" },
+        "dispatchLocation": { "type": "string" },
+        "quantity": { "type": "integer", "minimum": 1 },
+        "dispatchStatus": { "type": "string", "enum": ["pending", "assigned", "in_transit", "delivered", "cancelled"] },
+        "orderNumber": { "type": "string" },
+        "trackingNumber": { "type": "string" },
+        "customerRating": { "type": ["number", "null"], "minimum": 0, "maximum": 5 },
+        "estimatedDeliveryTime": { "type": ["string", "null"], "format": "date-time" },
+        "actualDeliveryTime": { "type": ["string", "null"], "format": "date-time" }
+      },
+      "required": ["id", "status", "productName", "min", "pickUp", "dropOff", "customerName", "deliveryPrice", "profileName"]
+    },
+    
+    "order": {
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "status": { "type": "string", "enum": ["Picked", "Not Picked"] },
+        "productName": { "type": "string" },
+        "min": { "type": "string" },
+        "pickUp": { "type": "string" },
+        "dropOff": { "type": "string" },
+        "customerName": { "type": "string" },
+        "deliveryPrice": { "type": "string" },
+        "profileName": { "type": "string" },
+        "orderNumber": { "type": "string" },
+        "trackingNumber": { "type": "string" },
+        "itemsCount": { "type": "integer", "minimum": 0 },
+        "quantity": { "type": "integer", "minimum": 1 },
+        "vehicleType": { "type": "string", "enum": ["car", "bike", "van"] },
+        "estimatedCost": { "type": "number", "minimum": 0 },
+        "actualCost": { "type": ["number", "null"], "minimum": 0 },
+        "orderDate": { "type": "string", "format": "date-time" },
+        "requestedDeliveryDate": { "type": "string", "format": "date-time" },
+        "actualDispatchDate": { "type": ["string", "null"], "format": "date-time" },
+        "actualDeliveryDate": { "type": ["string", "null"], "format": "date-time" }
+      },
+      "required": ["id", "status", "productName", "min", "pickUp", "dropOff", "customerName", "deliveryPrice", "profileName"]
+    },
+    
+    "dispatcher": {
+      "type": "object",
+      "properties": {
+        "id": { "type": ["string", "integer"] },
+        "name": { "type": "string" },
+        "image": { "type": "string" }
+      },
+      "required": ["id", "name"]
+    },
+    
+    "monthlyData": {
+      "type": "object",
+      "properties": {
+        "month": { "type": "string" },
+        "percentage": { "type": "number", "minimum": 0, "maximum": 100 }
+      },
+      "required": ["month", "percentage"]
+    }
+  },
+  
+  "dashboardStats": {
+    "type": "object",
+    "properties": {
+      "success": { "type": "boolean" },
+      "stats": {
+        "type": "object",
+        "properties": {
+          "totalDispatch": { "$ref": "#/definitions/dispatchStats" },
+          "activeDispatch": { "$ref": "#/definitions/dispatchStats" },
+          "pendingDispatch": { "$ref": "#/definitions/dispatchStats" },
+          "successfulDispatch": { "$ref": "#/definitions/dispatchStats" },
+          "cancelledDispatchCount": { "type": "integer", "minimum": 0 },
+          "successRate": { "type": "number", "minimum": 0, "maximum": 100 },
+          "totalRevenue": { "type": "number", "minimum": 0 }
+        },
+        "required": ["totalDispatch", "activeDispatch", "pendingDispatch", "successfulDispatch", "cancelledDispatchCount", "successRate", "totalRevenue"]
+      }
+    },
+    "required": ["success", "stats"]
+  },
+  
+  "dispatchSalesStats": {
+    "type": "object",
+    "properties": {
+      "success": { "type": "boolean" },
+      "salesData": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "properties": {
+            "_id": { "type": ["integer", "string"] },
+            "totalSales": { "type": "number", "minimum": 0 },
+            "orderCount": { "type": "integer", "minimum": 0 }
+          },
+          "required": ["_id", "totalSales", "orderCount"]
+        }
+      },
+      "orderTrends": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "properties": {
+            "_id": { "type": ["integer", "string"] },
+            "statuses": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "status": { "type": "string" },
+                  "count": { "type": "integer", "minimum": 0 }
+                },
+                "required": ["status", "count"]
+              }
+            }
+          },
+          "required": ["_id", "statuses"]
+        }
+      },
+      "period": { "type": "string", "enum": ["24hours", "7days", "30days", "12months"] }
+    },
+    "required": ["success", "salesData", "orderTrends", "period"]
+  },
+  
+  "recentShipments": {
+    "type": "object",
+    "properties": {
+      "success": { "type": "boolean" },
+      "shipments": {
+        "type": "array",
+        "items": { "$ref": "#/definitions/shipment" }
+      },
+      "pagination": {
+        "allOf": [{ "$ref": "#/definitions/pagination" }],
+        "properties": {
+          "totalShipments": { "type": "integer", "minimum": 0 }
+        },
+        "required": ["totalShipments"]
+      }
+    },
+    "required": ["success", "shipments", "pagination"]
+  },
+  
+  "dispatchHistory": {
+    "type": "object",
+    "properties": {
+      "success": { "type": "boolean" },
+      "orders": {
+        "type": "array",
+        "items": { "$ref": "#/definitions/order" }
+      },
+      "history": {
+        "type": "array",
+        "items": { "$ref": "#/definitions/monthlyData" }
+      },
+      "pagination": {
+        "allOf": [{ "$ref": "#/definitions/pagination" }],
+        "properties": {
+          "totalOrders": { "type": "integer", "minimum": 0 }
+        },
+        "required": ["totalOrders"]
+      }
+    },
+    "required": ["success", "orders", "history", "pagination"]
+  },
+  
+  "dispatcherDetails": {
+    "type": "object",
+    "properties": {
+      "success": { "type": "boolean" },
+      "dispatchers": {
+        "type": "array",
+        "items": { "$ref": "#/definitions/dispatcher" }
+      },
+      "dispatcher": {
+        "type": "object",
+        "properties": {
+          "personalInfo": {
+            "type": "object",
+            "properties": {
+              "fullName": { "type": "string" },
+              "email": { "type": "string", "format": "email" },
+              "profileImage": { "type": ["string", "null"] },
+              "about": { "type": ["string", "null"] },
+              "memberSince": { "type": "string", "format": "date-time" },
+              "lastLogin": { "type": ["string", "null"], "format": "date-time" }
+            },
+            "required": ["fullName", "email"]
+          },
+          "businessInfo": {
+            "type": "object",
+            "properties": {
+              "businessName": { "type": "string" },
+              "businessEmail": { "type": "string", "format": "email" },
+              "businessAddress": { "type": "string" },
+              "businessHotline": { "type": "string" },
+              "alternativePhoneNumber": { "type": ["string", "null"] },
+              "cacRegistrationNumber": { "type": "string" },
+              "isVerified": { "type": "boolean" },
+              "verificationStatus": { "type": "string", "enum": ["pending", "verified", "rejected"] }
+            },
+            "required": ["businessName", "businessEmail", "businessAddress"]
+          },
+          "performanceMetrics": {
+            "type": "object",
+            "properties": {
+              "totalOrders": { "type": "integer", "minimum": 0 },
+              "completedOrders": { "type": "integer", "minimum": 0 },
+              "cancelledOrders": { "type": "integer", "minimum": 0 },
+              "completionRate": { "type": "number", "minimum": 0, "maximum": 100 },
+              "averageDeliveryDays": { "type": "number", "minimum": 0 },
+              "businessRating": { "type": ["number", "null"], "minimum": 0, "maximum": 5 }
+            },
+            "required": ["totalOrders", "completedOrders", "cancelledOrders", "completionRate"]
+          }
+        },
+        "required": ["personalInfo", "businessInfo", "performanceMetrics"]
+      }
+    },
+    "required": ["success", "dispatchers", "dispatcher"]
+  },
+  
+  "errorResponse": {
+    "type": "object",
+    "properties": {
+      "success": { "type": "boolean", "enum": [false] },
+      "message": { "type": "string" }
+    },
+    "required": ["success", "message"]
+  }
+}

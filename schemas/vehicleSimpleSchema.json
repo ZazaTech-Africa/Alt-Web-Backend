@@ -1,40 +1,8 @@
 {
-  "$schema": "http://json-schema.org/draft-07/schema#",
-  "title": "Vehicle Registration Schema",
-  "description": "Schema for vehicle registration in the Sharperly platform",
-  "type": "object",
-  "properties": {
-    "numberOfDrivers": {
-      "type": "integer",
-      "description": "Number of drivers available",
-      "minimum": 0
-    },
-    "numberOfCars": {
-      "type": "integer",
-      "description": "Number of cars in the fleet",
-      "minimum": 0
-    },
-    "numberOfBikes": {
-      "type": "integer",
-      "description": "Number of bikes in the fleet",
-      "minimum": 0
-    },
-    "numberOfVans": {
-      "type": "integer",
-      "description": "Number of vans in the fleet",
-      "minimum": 0
-    },
-    "totalVehicles": {
-      "type": "integer",
-      "description": "Total number of vehicles (calculated automatically)",
-      "readOnly": true
-    },
-    "isActive": {
-      "type": "boolean",
-      "description": "Whether the vehicle registration is active",
-      "default": true
-    }
-  },
-  "required": ["numberOfDrivers", "numberOfCars", "numberOfBikes", "numberOfVans"],
-  "additionalProperties": false
+  "numberOfDrivers": 5,
+  "numberOfCars": 3,
+  "numberOfBikes": 2,
+  "numberOfVans": 1,
+  "totalVehicles": 6,
+  "isActive": true
 }
